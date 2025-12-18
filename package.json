@@ -1,0 +1,35 @@
+{
+    "name": "the-router",
+    "version": "1.0.0",
+    "description": "",
+    "main": "dist/index.js",
+    "types": "dist/index.d.ts",
+    "type": "module",
+    "keywords": [
+        "router",
+        "infrastructure",
+        "clean-architecture",
+        "navigation-api"
+    ],
+    "author": "Vadim Budarin",
+    "license": "MIT",
+    "packageManager": "pnpm@10.26.0",
+    "scripts": {
+        "test": "vitest",
+        "test:ui": "vitest --ui",
+        "test:run": "vitest run"
+    },
+    "devDependencies": {
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.1",
+        "@testing-library/react-hooks": "^8.0.1",
+        "@types/react": "^19.2.7",
+        "@vitest/ui": "^4.0.16",
+        "jsdom": "^27.3.0",
+        "prettier": "^3.7.4",
+        "react": "^19.2.3",
+        "react-dom": "^19.2.3",
+        "typescript": "^5.7.3",
+        "vitest": "^4.0.16"
+    }
+}

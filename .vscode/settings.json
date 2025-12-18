@@ -1,0 +1,158 @@
+{
+    // explorer
+    "explorer.autoReveal": true,
+    "explorer.incrementalNaming": "smart",
+    "debug.openExplorerOnEnd": true,
+    // editor
+    "editor.fontLigatures": true,
+    "editor.mouseWheelZoom": true,
+    "editor.smoothScrolling": true,
+    "editor.cursorSmoothCaretAnimation": "on",
+    "editor.minimap.enabled": false,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": true,
+    "editor.formatOnPaste": true,
+    "editor.language.colorizedBracketPairs": [
+        [
+            "(",
+            ")"
+        ],
+        [
+            "[",
+            "]"
+        ],
+        [
+            "{",
+            "}"
+        ]
+    ],
+    "editor.suggestSelection": "first",
+    "editor.codeActionsOnSave": {
+        "source.fixAll": "explicit",
+        "source.organizeImports": "never"
+    },
+    "editor.guides.bracketPairs": true,
+    "editor.guides.highlightActiveBracketPair": false,
+    "editor.fontFamily": "Consolas, Monaco, Menlo,'Courier New', monospace",
+    // files
+    "files.autoSave": "onFocusChange",
+    "files.insertFinalNewline": true,
+    "files.trimFinalNewlines": true,
+    "files.trimTrailingWhitespace": true,
+    "files.eol": "\n",
+    // git
+    "git.enableSmartCommit": true,
+    "git.confirmSync": false,
+    "git.autofetch": true,
+    "git.autofetchPeriod": 60,
+    // "git.branchProtection": ["master"],
+    "git.checkoutType": [
+        "local",
+        "remote"
+    ],
+    "git.ignoreRebaseWarning": true,
+    "git.inputValidationSubjectLength": 100,
+    "git.inputValidationLength": 200,
+    // ts/javascript
+    // "typescript.surveys.enabled": false,
+    "javascript.suggestionActions.enabled": false,
+    "typescript.tsdk": "./node_modules/typescript/lib",
+    "typescript.updateImportsOnFileMove.enabled": "always",
+    "typescript.preferences.importModuleSpecifier": "shortest",
+    "javascript.updateImportsOnFileMove.enabled": "always",
+    "typescript.preferences.importModuleSpecifierEnding": "js",
+    "javascript.preferences.importModuleSpecifierEnding": "js",
+    "typescript.format.semicolons": "insert",
+    "javascript.format.semicolons": "insert",
+    // prettier
+    "prettier.enable": true,
+    "json.format.enable": true,
+    "prettier.configPath": ".prettierrc",
+    "prettier.experimentalTernaries": true,
+    "prettier.enableDebugLogs": true,
+    "prettier.prettierPath": "./node_modules/prettier",
+    "prettier.htmlWhitespaceSensitivity": "strict",
+    "[json]": {
+        "editor.formatOnSave": true
+    },
+    "[css]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[html]": {
+        "editor.formatOnSave": true,
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[jsonc]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[xml]": {
+        "editor.defaultFormatter": "DotJoshJohnson.xml"
+    },
+    "[svg]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[javascriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[markdown]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    // workbench
+    "workbench.iconTheme": "vscode-icons",
+    "workbench.colorTheme": "Default Dark+",
+    "workbench.externalBrowser": "chrome",
+    "workbench.colorCustomizations": {},
+    // terminal
+    "terminal.integrated.defaultProfile.windows": "Git Bash",
+    "terminal.integrated.cursorBlinking": true,
+    "terminal.integrated.fontFamily": "Consolas, 'Courier New', monospace",
+    "terminal.integrated.minimumContrastRatio": 4.5,
+    "terminal.integrated.smoothScrolling": true,
+    "terminal.integrated.profiles.windows": {
+        "Bash": {
+            "path": "C:\\Program Files\\Git\\bin\\bash.exe",
+            "args": []
+        }
+    },
+    "terminal.integrated.scrollback": 500000,
+    "terminal.integrated.enablePersistentSessions": false,
+    "workbench.tree.enableStickyScroll": false,
+    "editor.stickyScroll.scrollWithEditor": false,
+    "editor.stickyScroll.enabled": false,
+    "accessibility.signals.terminalBell": {
+        "sound": "on"
+    },
+    "terminal.integrated.enableVisualBell": true,
+    // npm scripts
+    "npm.scriptExplorerAction": "run",
+    // emmet
+    "emmet.includeLanguages": {
+        "postcss": "css",
+        "javascript": "javascriptreact",
+        "typescript": "typescriptreact"
+    },
+    "emmet.showSuggestionsAsSnippets": true,
+    "notebook.defaultFormatter": "esbenp.prettier-vscode",
+    "window.zoomLevel": 0,
+    // extensions
+    "reactSnippets.settings.prettierEnabled": true,
+    "stylelint.configBasedir": "./",
+    "stylelint.configFile": "./stylelint.config.mjs",
+    "stylelint.packageManager": "pnpm",
+    "javascript.preferences.importModuleSpecifier": "non-relative",
+    "stylelint.validate": [
+        "css",
+        "postcss",
+        "html"
+    ]
+}

@@ -1,0 +1,24 @@
+{
+  "recommendations": [
+    "dbaeumer.vscode-eslint",
+    "esbenp.prettier-vscode",
+    "stylelint.vscode-stylelint",
+    "dsznajder.es7-react-js-snippets",
+    "ecmel.vscode-html-css",
+    "vitest.explorer",
+    "vscode-icons-team.vscode-icons",
+    "wayou.vscode-todo-highlight",
+    "felixfbecker.css-stacking-contexts",
+    "mhutchie.git-graph",
+    "ms-azuretools.vscode-docker",
+    "ms-playwright.playwrigh",
+    "naumovs.color-highlight",
+    "planbcoding.vscode-react-refactor",
+    "svetlanakost.typograf",
+    "viktorzetterstrom.non-breaking-space-highlighter",
+    "wallabyjs.wallaby-vscode",
+    "yoavbls.pretty-ts-errors",
+    "donjayamanne.githistory",
+    "dotjoshjohnson.xml"
+  ]
+}

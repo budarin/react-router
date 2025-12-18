@@ -30,8 +30,6 @@ npm i @budarin/the-router
 ```typescript
 import { useRouter, configureRouter } from '@budarin/the-router';
 
-// Настройка глобальной конфигурации (один раз при инициализации)
-configureRouter({ urlCacheLimit: 100 });
 
 function App() {
     const {
@@ -66,7 +64,7 @@ function App() {
 
 ## 📖 API
 
-### `useRouter(knownRoutes?: KnownRoutes)`
+### `useRouter(route?: Route)`
 
 **Возвращает:**
 
@@ -90,17 +88,6 @@ function App() {
 }
 ```
 
-**Глобальная настройка:**
-
-```typescript
-import { configureRouter } from '@budarin/the-router';
-
-// Вызывается один раз при инициализации приложения
-configureRouter({
-    urlCacheLimit: 200, // Лимит LRU кэша parsed URL (по умолчанию: 50)
-});
-```
-
 **Опции `navigate`:**
 
 ```typescript
@@ -111,14 +98,10 @@ configureRouter({
 }
 ```
 
-**`knownRoutes` (опционально):**
+**`route` (опционально):**
 
 ```typescript
-{
-    PROFILE: '/users/:id',
-    POST: '/posts/:year/:slug',
-    HOME: '/'
-}
+'/users/:id',
 ```
 
 ## 🛠 Примеры

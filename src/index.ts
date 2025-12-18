@@ -2,11 +2,11 @@ import type {
     Navigation,
     KnownRoutes,
     RouterState,
+    getRouterConfig,
     NavigateOptions,
     UseRouterReturn,
     NavigationNavigateOptions,
 } from './types';
-import { getRouterConfig } from './types';
 
 import { useSyncExternalStore, useCallback, useMemo } from 'react';
 

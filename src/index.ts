@@ -2,12 +2,12 @@ import type {
     Navigation,
     KnownRoutes,
     RouterState,
-    getRouterConfig,
     NavigateOptions,
     UseRouterReturn,
     NavigationNavigateOptions,
 } from './types';
 
+import { getRouterConfig } from './types';
 import { useSyncExternalStore, useCallback, useMemo } from 'react';
 
 // Подписка на изменения навигации (navigate + currententrychange)[web:225][web:220]

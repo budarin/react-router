@@ -66,6 +66,21 @@ export interface Navigation extends EventTarget {
 
 // ===== Публичный API хука =====
 
+/** Извлекает тип params из строки паттерна: '/users/:id' → { id: string } */
+export type ExtractRouteParams<T extends string> =
+    T extends `${string}:${infer Param}/${infer Rest}`
+        ? { [K in Param]: string } & ExtractRouteParams<`/${Rest}`>
+        : T extends `${string}:${infer Param}`
+          ? { [K in Param]: string }
+          : Record<string, never>;
+
+/** Тип params для useRouter(pattern): литерал пути → типизированные ключи, string/undefined → Record или {} */
+export type ParamsForPath<P> = [P] extends [string]
+    ? string extends P
+        ? Record<string, string>
+        : ExtractRouteParams<P>
+    : Record<string, never>;
+
 export interface RouterState {
     location: string; // полный URL
     pathname: string; // path (/users/123)
@@ -83,7 +98,11 @@ export interface NavigateOptions {
     state?: unknown;
 }
 
-export interface UseRouterReturn extends RouterState {
+export type UseRouterReturn<P extends string | undefined = undefined> = Omit<
+    RouterState,
+    'params'
+> & {
+    params: ParamsForPath<P>;
     /** Резолвится при commit навигации (не обязательно при полном finish, см. Navigation API). */
     navigate: (to: string | URL, options?: NavigateOptions) => Promise<void>;
     back: () => void;
@@ -92,7 +111,7 @@ export interface UseRouterReturn extends RouterState {
     replace: (to: string | URL, state?: unknown) => Promise<void>;
     canGoBack: (steps?: number) => boolean;
     canGoForward: (steps?: number) => boolean;
-}
+};
 
 // Логгер для роутера
 export type LoggerLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';

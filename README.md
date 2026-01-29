@@ -4,6 +4,8 @@
 
 Инфраструктурный хук для React на **Navigation API** + **URLPattern**. Без провайдеров, без контекста, без бизнес-логики.
 
+**Для динамического дерева компонентов:** что рендерить определяется в рантайме по URL (`pathname`, `params`, `matched`), а не статичным деревом маршрутов (как в React Router / TanStack Router). История тоже формируется динамически: при каждом переходе можно выбрать `push` или `replace`. Подходит, когда маршруты зависят от ролей, фич, CMS или конфига с бэка.
+
 [![npm](https://img.shields.io/npm/v/@budarin/react-router?color=cb0000)](https://www.npmjs.com/package/@budarin/react-router)
 [![npm](https://img.shields.io/npm/dt/@budarin/react-router)](https://www.npmjs.com/package/@budarin/react-router)
 [![bundle](https://img.shields.io/bundlephobia/minzip/@budarin/react-router)](https://bundlephobia.com/result?p=@budarin/react-router)
@@ -11,6 +13,8 @@
 
 ## ✨ Особенности
 
+- ✅ **Динамическое дерево** — маршрутизация в рантайме по pathname/params, без статичного route tree
+- ✅ **Динамическая история** — при каждом `navigate`/`replace` выбирается `push` или `replace`
 - ✅ **Navigation API** (`window.navigation.navigate()`, `traverseTo()`, `back/forward/go(n)`)
 - ✅ **URLPattern** для парсинга `:params` (только актуальные браузеры)
 - ✅ `useSyncExternalStore` — concurrent-safe, SSR-ready
@@ -107,6 +111,8 @@ configureRouter({
 **Логгер:** тип `Logger` — объект с методами `trace`, `debug`, `info`, `warn`, `error` (как у `console`). Уровни: `LoggerLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error'`. Если не передан — используется `console`.
 
 **`pattern` (опционально):** строка-шаблон пути (нативный **URLPattern**). `:name` — захват сегмента в `params` (только буквы, цифры, `_`). `*` — wildcard, в `params` не попадает.
+
+Типы параметров выводятся из литерала пути: `useRouter('/users/:id')` даёт `params: { id: string }`; при переменном пути — `Record<string, string>`. Экспортируются типы `ExtractRouteParams<P>` и `ParamsForPath<P>`.
 
 ```typescript
 useRouter('/users/:id');

@@ -207,7 +207,13 @@ function parseParamsFromCompiled(compiled: URLPattern, pathname: string): Record
 }
 
 // Экспортируем configureRouter и очистку кэшей (для тестов / смены окружения)
-export { configureRouter, type LoggerLevel, type Logger } from './types';
+export {
+    configureRouter,
+    type LoggerLevel,
+    type Logger,
+    type ExtractRouteParams,
+    type ParamsForPath,
+} from './types';
 
 /** Очищает кэши паттернов и URL. Для тестов или при смене base/origin. */
 export function clearRouterCaches(): void {
@@ -219,7 +225,7 @@ export function clearRouterCaches(): void {
     noNavSnapshotUrl = null;
 }
 
-export function useRouter(pattern?: string): UseRouterReturn {
+export function useRouter<P extends string = string>(pattern?: P): UseRouterReturn<P> {
     const navigation = getNavigation();
     const rawState = useSyncExternalStore(
         subscribeToNavigation,
@@ -379,21 +385,22 @@ export function useRouter(pattern?: string): UseRouterReturn {
     );
 
     return useMemo(
-        () => ({
-            navigate,
-            back,
-            forward,
-            go,
-            replace,
-            canGoBack,
-            canGoForward,
-            location: routerState.location,
-            pathname: routerState.pathname,
-            searchParams: routerState.searchParams,
-            params: routerState.params,
-            historyIndex: routerState.historyIndex,
-            matched: routerState.matched,
-        }),
+        () =>
+            ({
+                navigate,
+                back,
+                forward,
+                go,
+                replace,
+                canGoBack,
+                canGoForward,
+                location: routerState.location,
+                pathname: routerState.pathname,
+                searchParams: routerState.searchParams,
+                params: routerState.params,
+                historyIndex: routerState.historyIndex,
+                matched: routerState.matched,
+            }) as UseRouterReturn<P>,
         [
             navigate,
             back,

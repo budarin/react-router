@@ -110,7 +110,7 @@ configureRouter({
 
 ```typescript
 useRouter('/users/:id');
-useRouter('/elements/:elementId/*/:subsubId'); // * обрабатывается URLPattern
+useRouter('/elements/:elementId/*/:subElementId'); // * обрабатывается URLPattern
 ```
 
 ## 🛠 Примеры
@@ -153,9 +153,10 @@ const { searchParams, navigate } = useRouter('/posts');
 
 // Query параметры из search params
 const page = searchParams.get('page') || '1';
+const nextPage = page + 1;
 
 // Навигация с search params
-<button onClick={() => navigate('/posts?page=2')}>
+<button onClick={() => navigate(`/posts?page=${nextPage}`)}>
     Next Page
 </button>
 ```

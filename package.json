@@ -33,6 +33,7 @@
         "test:ui": "vitest --ui",
         "test:run": "vitest run",
         "pnpm-install": "pnpm install",
-        "upgrade-deps": "sh scripts/upgrade-deps.sh"
+        "upgrade-deps": "sh scripts/upgrade-deps.sh",
+        "publish-package": "pnpm build && pnpm publish --access=public"
     }
 }

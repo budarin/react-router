@@ -31,7 +31,7 @@
         "declaration": true,
         "declarationMap": true,
         "sourceMap": true,
-        "emitDeclarationOnly": true,
+        "emitDeclarationOnly": false,
         "stripInternal": true,
 
         /* Пути при желании (пример) */

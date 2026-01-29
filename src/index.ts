@@ -108,7 +108,7 @@ function computeNavigationSnapshot(nav: Navigation | undefined): NavigationSnaps
         currentKey: nav.currentEntry?.key ?? '',
         canGoBackFlag: !!nav.canGoBack,
         canGoForwardFlag: !!nav.canGoForward,
-        entriesKeys: nav.entries.map((e) => e.key) ?? [],
+        entriesKeys: nav.entries().map((e) => e.key) ?? [],
         urlStr,
         pathname: parsed.pathname,
         searchParams: parsed.searchParams,

@@ -48,13 +48,16 @@ export interface NavigationNavigateResult {
 
 export interface Navigation extends EventTarget {
     readonly currentEntry: NavigationHistoryEntry | null;
-    readonly entries: NavigationHistoryEntry[];
+    entries(): NavigationHistoryEntry[];
     readonly canGoBack: boolean;
     readonly canGoForward: boolean;
-    navigate(url: string, options?: NavigationNavigateOptions): Promise<NavigationNavigateResult>;
+    navigate(
+        url: string | URL,
+        options?: NavigationNavigateOptions
+    ): Promise<NavigationNavigateResult>;
     back(): void;
     forward(): void;
-    traverseTo(key: string): void;
+    traverseTo(key: string, options?: { info?: unknown }): NavigationNavigateResult;
     updateCurrentEntry(options?: { state?: unknown }): void;
 }
 

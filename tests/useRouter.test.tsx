@@ -187,7 +187,7 @@ describe('useRouter', () => {
                 addEventListener: vi.fn(),
                 removeEventListener: vi.fn(),
                 currentEntry: { key: 'k0', url: 'http://localhost/' },
-                entries: [{ key: 'k0' }],
+                entries: () => [{ key: 'k0' }],
                 canGoBack: false,
                 canGoForward: false,
                 navigate: mockNavigate,
@@ -369,7 +369,7 @@ describe('useRouter', () => {
                 addEventListener: vi.fn(),
                 removeEventListener: vi.fn(),
                 currentEntry: { key: 'key0' },
-                entries: [{ key: 'key0' }],
+                entries: () => [{ key: 'key0' }],
                 canGoBack: false,
                 canGoForward: false,
             };
@@ -397,7 +397,7 @@ describe('useRouter', () => {
                 addEventListener: vi.fn(),
                 removeEventListener: vi.fn(),
                 currentEntry: { key: 'key0' },
-                entries: [{ key: 'key0' }],
+                entries: () => [{ key: 'key0' }],
                 canGoBack: true,
                 canGoForward: false,
                 back: vi.fn().mockImplementation(() => {
@@ -426,7 +426,7 @@ describe('useRouter', () => {
                 addEventListener: vi.fn(),
                 removeEventListener: vi.fn(),
                 currentEntry: { key: 'key0' },
-                entries: [{ key: 'key0' }],
+                entries: () => [{ key: 'key0' }],
                 canGoBack: false,
                 canGoForward: true,
                 forward: vi.fn().mockImplementation(() => {
@@ -455,7 +455,7 @@ describe('useRouter', () => {
                 addEventListener: vi.fn(),
                 removeEventListener: vi.fn(),
                 currentEntry: { key: 'key0' },
-                entries: [{ key: 'key0' }, { key: 'key1' }],
+                entries: () => [{ key: 'key0' }, { key: 'key1' }],
                 canGoBack: true,
                 canGoForward: false,
                 traverseTo: vi.fn().mockImplementation(() => {
@@ -543,7 +543,7 @@ describe('useRouter', () => {
                 addEventListener: vi.fn(),
                 removeEventListener: vi.fn(),
                 currentEntry: { key: 'key0' },
-                entries: [{ key: 'key0' }],
+                entries: () => [{ key: 'key0' }],
                 canGoBack: false,
                 canGoForward: false,
             };
@@ -577,7 +577,7 @@ describe('useRouter', () => {
                 addEventListener: vi.fn(),
                 removeEventListener: vi.fn(),
                 currentEntry: { key: 'key0' },
-                entries: [{ key: 'key0' }],
+                entries: () => [{ key: 'key0' }],
                 canGoBack: true,
                 canGoForward: false,
                 back: vi.fn().mockImplementation(() => {

@@ -12,12 +12,12 @@
 ## ✨ Особенности
 
 - ✅ **Navigation API** (`window.navigation.navigate()`, `traverseTo()`, `back/forward/go(n)`)
-- ✅ **URLPattern** для парсинга `:params` (с fallback на RegExp)
+- ✅ **URLPattern** для парсинга `:params` (только актуальные браузеры)
 - ✅ `useSyncExternalStore` — concurrent-safe, SSR-ready
 - ✅ `canGoBack(n)`, `canGoForward(n)` — точная проверка по истории
 - ✅ **LRU кэш URL** с настраиваемым лимитом (по умолчанию 50)
 - ✅ **O(1) поиск** `historyIndex` через Map
-- ✅ Fallback на History API для старых браузеров
+- ✅ **Только актуальные браузеры** (Navigation API + URLPattern), без fallback
 - ✅ **0 провайдеров** — просто `useRouter()`
 - ✅ **~1.2kB** gzipped
 
@@ -39,11 +39,7 @@ function App() {
         navigate,
         go,
         canGoBack
-    } = useRouter({
-        // Опционально: известные роуты для автопарсинга params
-        PROFILE: '/users/:id',
-        POST: '/posts/:year/:slug'
-    });
+    } = useRouter('/users/:id'); // опционально: паттерн для парсинга params
 
     return (
         <div>
@@ -64,21 +60,22 @@ function App() {
 
 ## 📖 API
 
-### `useRouter(route?: Route)`
+### `useRouter(pattern?: string)`
 
 **Возвращает:**
 
 ```typescript
 {
     // Текущее состояние
-    location: string; // 'https://example.com/users/123?page=1'
-    pathname: string; // '/users/123'
-    searchParams: URLSearchParams; // ?page=1
-    params: Record<string, string>; // { id: '123' }
-    historyIndex: number; // 2 (или -1)
+    location: string;
+    pathname: string;
+    searchParams: URLSearchParams; // только чтение, не мутировать
+    params: Record<string, string>;
+    historyIndex: number;
+    matched?: boolean; // true/false при переданном pattern, иначе undefined
 
     // Навигация
-    navigate: (to: string | URL, options?: NavigateOptions) => Promise<void>;
+    navigate: (to: string | URL, options?) => Promise<void>; // резолвится при commit, см. Navigation API
     back: () => void;
     forward: () => void;
     go: (delta: number) => void;
@@ -98,10 +95,11 @@ function App() {
 }
 ```
 
-**`route` (опционально):**
+**`pattern` (опционально):** строка-шаблон пути (нативный **URLPattern**). `:name` — захват сегмента в `params` (только буквы, цифры, `_`). `*` — wildcard, в `params` не попадает.
 
 ```typescript
-'/users/:id',
+useRouter('/users/:id');
+useRouter('/elements/:elementId/*/:subsubId'); // * обрабатывается URLPattern
 ```
 
 ## 🛠 Примеры
@@ -119,9 +117,7 @@ const { navigate, pathname } = useRouter();
 ### 2. С параметрами
 
 ```typescript
-const { params, navigate } = useRouter({
-    USER: '/users/:id'
-});
+const { params, navigate } = useRouter('/users/:id');
 
 <h1>User: {params.id}</h1> // '123'
 ```
@@ -142,7 +138,7 @@ const { go, canGoBack, canGoForward } = useRouter();
 ### 4. Search params
 
 ```typescript
-const { searchParams, navigate } = useRouter({ POSTS: '/posts' });
+const { searchParams, navigate } = useRouter('/posts');
 
 // Query параметры из search params
 const page = searchParams.get('page') || '1';
@@ -195,15 +191,15 @@ import 'urlpattern-polyfill';
 | Navigation API | 102+        | 109+    | 16.4+  |
 | URLPattern     | 110+        | 115+    | 16.4+  |
 
-Fallback: History API работает везде.
+Роутер рассчитан только на эти версии, fallback на History API нет.
 
 ## 🎛 Под капотом
 
 - `useSyncExternalStore` на navigation события (`navigate`, `currententrychange`)
 - LRU кэш parsed URL (настраиваемый лимит)
 - Map для O(1) поиска `historyIndex`
-- URLPattern / RegExp для `:params`
-- Кэш compiled patterns
+- URLPattern для `:params`
+- Кэш compiled patterns; `clearRouterCaches()` — очистка кэшей (тесты, смена окружения)
 - SSR-safe (checks `typeof window`)
 
 ## 🤝 Лицензия

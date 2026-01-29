@@ -1,6 +1,5 @@
 import type {
     Navigation,
-    KnownRoutes,
     RouterState,
     NavigateOptions,
     UseRouterReturn,
@@ -29,17 +28,9 @@ function isValidUrl(url: string): boolean {
     }
 }
 
-// Создание RegExp из паттерна роута
-function createRouteRegExp(pattern: string): RegExp {
-    return new RegExp('^' + pattern.replace(/:(\w+)/g, '(?<$1>[^/]+)') + '$');
-}
-
-// Проверка соответствия паттерна pathname
-function testPattern(compiled: URLPattern | RegExp, pathname: string): boolean {
-    if (compiled instanceof URLPattern) {
-        return compiled.test({ pathname });
-    }
-    return (compiled as RegExp).test(pathname);
+// Проверка соответствия паттерна pathname (только URLPattern)
+function testPattern(compiled: URLPattern, pathname: string): boolean {
+    return compiled.test({ pathname });
 }
 
 // Подписка на изменения навигации (navigate + currententrychange)[web:225][web:220]
@@ -54,27 +45,24 @@ function subscribeNavigation(navigation: Navigation) {
     };
 }
 
-// Кэш для URLPattern / RegExp, чтобы не пересоздавать каждый рендер[web:140][web:221]
-const PATTERN_CACHE = new Map<string, URLPattern | RegExp>();
+// Кэш скомпилированных URLPattern[web:140][web:221]
+const PATTERN_CACHE = new Map<string, URLPattern>();
 
-function getCompiledPattern(pattern: string): URLPattern | RegExp {
-    if (!PATTERN_CACHE.has(pattern)) {
-        if (typeof URLPattern !== 'undefined') {
-            try {
-                PATTERN_CACHE.set(pattern, new URLPattern({ pathname: pattern }));
-            } catch {
-                PATTERN_CACHE.set(pattern, createRouteRegExp(pattern));
-            }
-        } else {
-            PATTERN_CACHE.set(pattern, createRouteRegExp(pattern));
-        }
+function getCompiledPattern(pattern: string): URLPattern {
+    let compiled = PATTERN_CACHE.get(pattern);
+    if (!compiled) {
+        compiled = new URLPattern({ pathname: pattern });
+        PATTERN_CACHE.set(pattern, compiled);
     }
-    return PATTERN_CACHE.get(pattern)!;
+    return compiled;
 }
 
 // Общий LRU-кэш URL → разобранный URL (один на модуль, лимит из configureRouter)[web:133]
 const URL_CACHE = new Map<string, URL>();
 
+/**
+ * Парсит URL с LRU-кэшем. При ошибке парсинга не кэширует — возвращает fallback URL.
+ */
 function getCachedParsedUrl(urlStr: string): URL {
     const cache = URL_CACHE;
     const existing = cache.get(urlStr);
@@ -95,6 +83,7 @@ function getCachedParsedUrl(urlStr: string): URL {
         return parsed;
     } catch (error) {
         console.warn('[useRouter] Invalid URL:', urlStr, error);
+        // Не кэшируем битый URL — возвращаем fallback без записи в кэш
         try {
             return new URL('/', base);
         } catch {
@@ -103,31 +92,32 @@ function getCachedParsedUrl(urlStr: string): URL {
     }
 }
 
-// Парсинг params по паттерну: '/users/:id' + '/users/123' → { id: '123' }[web:140][web:125]
-function parseParams(pathname: string, routePattern?: string): Record<string, string> {
-    if (!routePattern) return {};
-
-    const compiled = getCompiledPattern(routePattern);
-
-    // Ветка URLPattern (нативная)[web:140][web:221]
-    if (compiled instanceof URLPattern) {
-        const match = compiled.exec({ pathname });
-        return (match?.pathname.groups ?? {}) as Record<string, string>;
-    }
-
-    // Ветка RegExp с именованными группами
-    const re = compiled as RegExp;
-    const m = pathname.match(re);
-
-    if (!m || !m.groups) return {};
-
-    return m.groups as Record<string, string>;
+// Извлечение params из уже скомпилированного URLPattern (один exec, без повторного getCompiledPattern)
+// URLPattern кладёт сегменты * в groups с числовыми ключами — их не возвращаем.
+function parseParamsFromCompiled(compiled: URLPattern, pathname: string): Record<string, string> {
+    const match = compiled.exec({ pathname });
+    const groups = (match?.pathname.groups ?? {}) as Record<string, string>;
+    return Object.fromEntries(
+        Object.entries(groups).filter(([key]) => !/^\d+$/.test(key))
+    ) as Record<string, string>;
 }
 
-// Экспортируем configureRouter для глобальной настройки
+// Парсинг params по строке паттерна (для внешних вызовов)
+function parseParams(pathname: string, routePattern?: string): Record<string, string> {
+    if (!routePattern) return {};
+    return parseParamsFromCompiled(getCompiledPattern(routePattern), pathname);
+}
+
+// Экспортируем configureRouter и очистку кэшей (для тестов / смены окружения)
 export { configureRouter } from './types';
 
-export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
+/** Очищает кэши паттернов и URL. Для тестов или при смене base/origin. */
+export function clearRouterCaches(): void {
+    PATTERN_CACHE.clear();
+    URL_CACHE.clear();
+}
+
+export function useRouter(pattern?: string): UseRouterReturn {
     const navigation: Navigation | undefined =
         typeof window !== 'undefined' && 'navigation' in window
             ? (window.navigation as Navigation)
@@ -191,7 +181,7 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
         return map;
     }, [rawState.entriesKeys]);
 
-    // 2. Производное состояние роутера (мемоизировано)
+    // 2. Производное состояние роутера (мемоизировано). Один вызов getCompiledPattern на рендер.
     const routerState: RouterState & {
         _entriesKeys: string[];
     } = useMemo(() => {
@@ -200,20 +190,14 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
         const parsed = getCachedParsedUrl(urlStr);
         const pathname = parsed.pathname;
 
-        // Поиск подходящего паттерна среди knownRoutes (если передан)
-        let matchedPattern: string | undefined;
-        if (knownRoutes) {
-            for (const pattern of Object.values(knownRoutes)) {
-                const compiled = getCompiledPattern(pattern);
-                if (testPattern(compiled, pathname)) {
-                    matchedPattern = pattern;
-                    break;
-                }
-            }
+        let matched: boolean | undefined;
+        let params: Record<string, string> = {};
+        if (pattern) {
+            const compiled = getCompiledPattern(pattern);
+            const patternMatched = testPattern(compiled, pathname);
+            matched = patternMatched;
+            params = patternMatched ? parseParamsFromCompiled(compiled, pathname) : {};
         }
-
-        const params = matchedPattern ? parseParams(pathname, matchedPattern) : {};
-        // O(1) поиск вместо O(n) indexOf
         const historyIndex = keyToIndexMap.get(rawState.currentKey) ?? -1;
 
         return {
@@ -222,34 +206,22 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
             searchParams: parsed.searchParams,
             params,
             historyIndex,
+            matched,
             _entriesKeys: rawState.entriesKeys,
         };
-    }, [navigation, rawState.currentKey, rawState.entriesKeys, knownRoutes, keyToIndexMap]);
+    }, [navigation, rawState.currentKey, rawState.entriesKeys, pattern, keyToIndexMap]);
 
-    // 3. Навигационные операции[web:217][web:219]
+    // 3. Навигационные операции. Только Navigation API — без Navigation состояние не обновляется.
     const navigate = useCallback(
         async (to: string | URL, options: NavigateOptions = {}): Promise<void> => {
             const targetUrl = typeof to === 'string' ? to : to.toString();
 
-            // Валидация URL
             if (!isValidUrl(targetUrl)) {
                 console.warn('[useRouter] Invalid URL rejected:', targetUrl);
                 return;
             }
 
             if (!navigation) {
-                // Fallback на History API
-                if (isBrowser) {
-                    try {
-                        if (options.replace) {
-                            window.history.replaceState(options.state, '', targetUrl);
-                        } else {
-                            window.history.pushState(options.state, '', targetUrl);
-                        }
-                    } catch (error) {
-                        console.error('[useRouter] History API error:', error);
-                    }
-                }
                 return;
             }
 
@@ -266,18 +238,6 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
                 await navigation.navigate(targetUrl, navOptions);
             } catch (error) {
                 console.error('[useRouter] Navigation error:', error);
-                // Пробуем fallback на History API
-                if (isBrowser) {
-                    try {
-                        if (options.replace) {
-                            window.history.replaceState(options.state, '', targetUrl);
-                        } else {
-                            window.history.pushState(options.state, '', targetUrl);
-                        }
-                    } catch (fallbackError) {
-                        console.error('[useRouter] History API fallback error:', fallbackError);
-                    }
-                }
             }
         },
         [navigation]
@@ -285,11 +245,7 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
 
     const back = useCallback(() => {
         try {
-            if (navigation) {
-                navigation.back();
-            } else if (isBrowser) {
-                window.history.back();
-            }
+            if (navigation) navigation.back();
         } catch (error) {
             console.error('[useRouter] Back navigation error:', error);
         }
@@ -297,11 +253,7 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
 
     const forward = useCallback(() => {
         try {
-            if (navigation) {
-                navigation.forward();
-            } else if (isBrowser) {
-                window.history.forward();
-            }
+            if (navigation) navigation.forward();
         } catch (error) {
             console.error('[useRouter] Forward navigation error:', error);
         }
@@ -315,10 +267,7 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
             }
 
             if (!navigation || routerState._entriesKeys.length === 0) {
-                // Для History API точной информации нет — считаем, что 1 шаг ок,
-                // а больше уже зависит от history.length (грубая эвристика).
-                if (!isBrowser) return false;
-                return steps <= window.history.length - 1;
+                return false;
             }
             const idx = routerState.historyIndex;
             if (idx === -1) return false;
@@ -335,8 +284,6 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
             }
 
             if (!navigation || routerState._entriesKeys.length === 0) {
-                if (!isBrowser) return false;
-                // Для обычного History API вперёд проверить нельзя корректно.
                 return false;
             }
             const idx = routerState.historyIndex;
@@ -370,8 +317,6 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
                     const targetKey = routerState._entriesKeys[targetIdx];
                     if (targetKey === undefined) return;
                     navigation.traverseTo(targetKey);
-                } else if (isBrowser) {
-                    window.history.go(delta);
                 }
             } catch (error) {
                 console.error('[useRouter] Go navigation error:', error);
@@ -385,18 +330,36 @@ export function useRouter(knownRoutes?: KnownRoutes): UseRouterReturn {
         [navigate]
     );
 
-    return {
-        navigate,
-        back,
-        forward,
-        go,
-        replace,
-        canGoBack,
-        canGoForward,
-        location: routerState.location,
-        pathname: routerState.pathname,
-        searchParams: routerState.searchParams,
-        params: routerState.params,
-        historyIndex: routerState.historyIndex,
-    };
+    return useMemo(
+        () => ({
+            navigate,
+            back,
+            forward,
+            go,
+            replace,
+            canGoBack,
+            canGoForward,
+            location: routerState.location,
+            pathname: routerState.pathname,
+            searchParams: routerState.searchParams,
+            params: routerState.params,
+            historyIndex: routerState.historyIndex,
+            matched: routerState.matched,
+        }),
+        [
+            navigate,
+            back,
+            forward,
+            go,
+            replace,
+            canGoBack,
+            canGoForward,
+            routerState.location,
+            routerState.pathname,
+            routerState.searchParams,
+            routerState.params,
+            routerState.historyIndex,
+            routerState.matched,
+        ]
+    );
 }

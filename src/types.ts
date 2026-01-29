@@ -69,9 +69,12 @@ export interface Navigation extends EventTarget {
 export interface RouterState {
     location: string; // полный URL
     pathname: string; // path (/users/123)
+    /** Только чтение. Мутировать не следует — не меняет реальный URL. */
     searchParams: URLSearchParams; // ?page=1
     params: Record<string, string>; // { id: '123' } из паттерна
     historyIndex: number; // индекс в истории или -1
+    /** true, если передан pattern и он совпал с pathname; false при несовпадении; undefined, если pattern не передан */
+    matched?: boolean;
 }
 
 export interface NavigateOptions {
@@ -81,6 +84,7 @@ export interface NavigateOptions {
 }
 
 export interface UseRouterReturn extends RouterState {
+    /** Резолвится при commit навигации (не обязательно при полном finish, см. Navigation API). */
     navigate: (to: string | URL, options?: NavigateOptions) => Promise<void>;
     back: () => void;
     forward: () => void;
@@ -89,9 +93,6 @@ export interface UseRouterReturn extends RouterState {
     canGoBack: (steps?: number) => boolean;
     canGoForward: (steps?: number) => boolean;
 }
-
-// Известные роуты вида: { PROFILE: '/users/:id', POST: '/posts/:year/:slug' }
-export type KnownRoutes = Record<string, string>;
 
 // Глобальная конфигурация роутера
 export interface RouterConfig {

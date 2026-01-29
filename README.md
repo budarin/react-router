@@ -121,52 +121,152 @@ useRouter('/elements/:elementId/*/:subElementId'); // * обрабатывает
 
 ## 🛠 Примеры
 
-Примеры по фичам лежат в папке [samples/](samples/) — по одному файлу на сценарий.
+### 1. Базовая навигация (pathname, navigate)
 
-### 1. Базовая навигация
+```tsx
+import { useRouter } from '@budarin/react-router';
 
-```typescript
-const { navigate, pathname } = useRouter();
+function BasicNavigationExample() {
+    const { pathname, navigate } = useRouter();
 
-<button onClick={() => navigate('/posts')}>
-    Posts
-</button>
+    return (
+        <div>
+            <p>Текущий путь: {pathname}</p>
+            <button type="button" onClick={() => navigate('/posts')}>
+                К постам
+            </button>
+            <button type="button" onClick={() => navigate('/')}>
+                На главную
+            </button>
+        </div>
+    );
+}
 ```
 
-### 2. С параметрами
+### 2. Параметры пути (useRouter('/users/:id'), params)
 
-```typescript
-const { params, navigate } = useRouter('/users/:id');
+```tsx
+import { useRouter } from '@budarin/react-router';
 
-<h1>User: {params.id}</h1> // '123'
+function ParamsExample() {
+    const { params, pathname, navigate } = useRouter('/users/:id');
+
+    return (
+        <div>
+            <p>Pathname: {pathname}</p>
+            <p>User ID из params: {params.id ?? '—'}</p>
+            <button type="button" onClick={() => navigate('/users/123')}>
+                User 123
+            </button>
+            <button type="button" onClick={() => navigate('/users/456')}>
+                User 456
+            </button>
+        </div>
+    );
+}
 ```
 
-### 3. History API (go/back/forward)
+### 3. Search params (query)
 
-```typescript
-const { go, canGoBack, canGoForward } = useRouter();
+```tsx
+import { useRouter } from '@budarin/react-router';
 
-<button onClick={() => go(-2)} disabled={!canGoBack(2)}>
-    ← 2 steps back
-</button>
-<button onClick={() => go(1)} disabled={!canGoForward()}>
-    1 step forward →
-</button>
+function SearchParamsExample() {
+    const { searchParams, navigate, pathname } = useRouter('/posts');
+    const pageParam = searchParams.get('page') ?? '1';
+    const currentPage = Number.parseInt(pageParam, 10) || 1;
+
+    return (
+        <div>
+            <p>Путь: {pathname}</p>
+            <p>Страница: {currentPage}</p>
+            <button
+                type="button"
+                onClick={() => navigate(`/posts?page=${currentPage - 1}`)}
+                disabled={currentPage <= 1}
+            >
+                Пред. страница
+            </button>
+            <button type="button" onClick={() => navigate(`/posts?page=${currentPage + 1}`)}>
+                След. страница
+            </button>
+        </div>
+    );
+}
 ```
 
-### 4. Search params
+### 4. История (back, forward, go, canGoBack, canGoForward)
 
-```typescript
-const { searchParams, navigate } = useRouter('/posts');
+```tsx
+import { useRouter } from '@budarin/react-router';
 
-// Query параметры из search params
-const page = searchParams.get('page') || '1';
-const nextPage = Number.parseInt(page, 10) + 1;
+function HistoryExample() {
+    const { go, back, forward, canGoBack, canGoForward } = useRouter();
 
-// Навигация с search params
-<button onClick={() => navigate(`/posts?page=${nextPage}`)}>
-    Next Page
-</button>
+    return (
+        <div>
+            <button type="button" onClick={() => back()} disabled={!canGoBack()}>
+                ← Назад
+            </button>
+            <button type="button" onClick={() => go(-2)} disabled={!canGoBack(2)}>
+                ← 2 шага
+            </button>
+            <button type="button" onClick={() => go(1)} disabled={!canGoForward()}>
+                Вперёд →
+            </button>
+            <button type="button" onClick={() => forward()} disabled={!canGoForward()}>
+                Forward
+            </button>
+        </div>
+    );
+}
+```
+
+### 5. Push и replace (и метод replace())
+
+```tsx
+import { useRouter } from '@budarin/react-router';
+
+function PushReplaceExample() {
+    const { navigate, replace, pathname } = useRouter();
+
+    return (
+        <div>
+            <p>Текущий путь: {pathname}</p>
+            <button type="button" onClick={() => navigate('/step-push', { history: 'push' })}>
+                Перейти (push) — в истории появится запись
+            </button>
+            <button type="button" onClick={() => navigate('/step-replace', { history: 'replace' })}>
+                Перейти (replace через navigate)
+            </button>
+            <button type="button" onClick={() => replace('/step-replace-method')}>
+                Перейти через replace() — то же, что history: 'replace'
+            </button>
+        </div>
+    );
+}
+```
+
+### 6. matched (совпадение pathname с pattern)
+
+```tsx
+import { useRouter } from '@budarin/react-router';
+
+function MatchedExample() {
+    const { pathname, matched, params } = useRouter('/users/:id');
+
+    return (
+        <div>
+            <p>Pathname: {pathname}</p>
+            <p>Pattern /users/:id совпал: {matched === true ? 'да' : 'нет'}</p>
+            {matched === true ? (
+                <p>User ID: {params.id}</p>
+            ) : (
+                <p>Это не страница пользователя (path не совпал с /users/:id).</p>
+            )}
+        </div>
+    );
+}
 ```
 
 ## ⚙️ Установка
@@ -174,7 +274,7 @@ const nextPage = Number.parseInt(page, 10) + 1;
 ```bash
 npm i @budarin/react-router
 
-# или
+pnpm add @budarin/react-router
 
 yarn add @budarin/react-router
 ```

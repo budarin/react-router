@@ -33,12 +33,50 @@ function testPattern(compiled: URLPattern, pathname: string): boolean {
     return compiled.test({ pathname });
 }
 
-// Общий store для navigation: один снимок и 2 слушателя на всё приложение (вместо 2N при N хуках)
+// Общий LRU-кэш URL → разобранный URL (используется в snapshot, один раз на текущий URL)
+const URL_CACHE = new Map<string, URL>();
+
+/**
+ * Парсит URL с LRU-кэшем. При ошибке парсинга не кэширует — возвращает fallback URL.
+ */
+function getCachedParsedUrl(urlStr: string): URL {
+    const cache = URL_CACHE;
+    const existing = cache.get(urlStr);
+    if (existing !== undefined) {
+        cache.delete(urlStr);
+        cache.set(urlStr, existing);
+        return existing;
+    }
+    const base = isBrowser ? window.location.origin : 'http://localhost';
+    try {
+        const parsed = new URL(urlStr, base);
+        const limit = getRouterConfig().urlCacheLimit;
+        if (cache.size >= limit) {
+            const firstKey = cache.keys().next().value;
+            if (firstKey !== undefined) cache.delete(firstKey);
+        }
+        cache.set(urlStr, parsed);
+        return parsed;
+    } catch (error) {
+        console.warn('[useRouter] Invalid URL:', urlStr, error);
+        try {
+            return new URL('/', base);
+        } catch {
+            return new URL('http://localhost/');
+        }
+    }
+}
+
+// Общий store для navigation: один снимок и 2 слушателя на всё приложение (вместо 2N при N хуках).
+// Разбор текущего URL (pathname, searchParams) делается один раз при обновлении snapshot, не в каждом хуке.
 type NavigationSnapshot = {
     currentKey: string;
     canGoBackFlag: boolean;
     canGoForwardFlag: boolean;
     entriesKeys: string[];
+    urlStr: string;
+    pathname: string;
+    searchParams: URLSearchParams;
 };
 
 const DEFAULT_SNAPSHOT: NavigationSnapshot = {
@@ -46,6 +84,9 @@ const DEFAULT_SNAPSHOT: NavigationSnapshot = {
     canGoBackFlag: false,
     canGoForwardFlag: false,
     entriesKeys: [],
+    urlStr: '/',
+    pathname: '/',
+    searchParams: new URLSearchParams(),
 };
 
 function getNavigation(): Navigation | undefined {
@@ -56,11 +97,16 @@ function getNavigation(): Navigation | undefined {
 
 function computeNavigationSnapshot(nav: Navigation | undefined): NavigationSnapshot {
     if (!nav) return DEFAULT_SNAPSHOT;
+    const urlStr = nav.currentEntry?.url ?? (isBrowser ? window.location.href : '/');
+    const parsed = getCachedParsedUrl(urlStr);
     return {
         currentKey: nav.currentEntry?.key ?? '',
         canGoBackFlag: !!nav.canGoBack,
         canGoForwardFlag: !!nav.canGoForward,
         entriesKeys: nav.entries.map((e) => e.key) ?? [],
+        urlStr,
+        pathname: parsed.pathname,
+        searchParams: parsed.searchParams,
     };
 }
 
@@ -93,9 +139,14 @@ function subscribeToNavigation(callback: () => void): () => void {
                 unsubscribeNavigation = null;
             }
             sharedSnapshot = null;
+            noNavSnapshot = null;
+            noNavSnapshotUrl = null;
         }
     };
 }
+
+let noNavSnapshot: NavigationSnapshot | null = null;
+let noNavSnapshotUrl: string | null = null;
 
 function getNavigationSnapshot(): NavigationSnapshot {
     if (sharedSnapshot !== null) return sharedSnapshot;
@@ -104,7 +155,18 @@ function getNavigationSnapshot(): NavigationSnapshot {
         sharedSnapshot = computeNavigationSnapshot(nav);
         return sharedSnapshot;
     }
-    return DEFAULT_SNAPSHOT;
+    // Нет Navigation API (тесты, старый браузер) — URL из window.location, разбор один раз через кэш
+    const urlStr = isBrowser ? window.location.href : '/';
+    if (noNavSnapshot !== null && noNavSnapshotUrl === urlStr) return noNavSnapshot;
+    const parsed = getCachedParsedUrl(urlStr);
+    noNavSnapshotUrl = urlStr;
+    noNavSnapshot = {
+        ...DEFAULT_SNAPSHOT,
+        urlStr,
+        pathname: parsed.pathname,
+        searchParams: parsed.searchParams,
+    };
+    return noNavSnapshot;
 }
 
 // Один keyToIndexMap на снимок (один на все хуки при общем rawState)
@@ -134,41 +196,6 @@ function getCompiledPattern(pattern: string): URLPattern {
     return compiled;
 }
 
-// Общий LRU-кэш URL → разобранный URL (один на модуль, лимит из configureRouter)[web:133]
-const URL_CACHE = new Map<string, URL>();
-
-/**
- * Парсит URL с LRU-кэшем. При ошибке парсинга не кэширует — возвращает fallback URL.
- */
-function getCachedParsedUrl(urlStr: string): URL {
-    const cache = URL_CACHE;
-    const existing = cache.get(urlStr);
-    if (existing !== undefined) {
-        cache.delete(urlStr);
-        cache.set(urlStr, existing);
-        return existing;
-    }
-    const base = isBrowser ? window.location.origin : 'http://localhost';
-    try {
-        const parsed = new URL(urlStr, base);
-        const limit = getRouterConfig().urlCacheLimit;
-        if (cache.size >= limit) {
-            const firstKey = cache.keys().next().value;
-            if (firstKey !== undefined) cache.delete(firstKey);
-        }
-        cache.set(urlStr, parsed);
-        return parsed;
-    } catch (error) {
-        console.warn('[useRouter] Invalid URL:', urlStr, error);
-        // Не кэшируем битый URL — возвращаем fallback без записи в кэш
-        try {
-            return new URL('/', base);
-        } catch {
-            return new URL('http://localhost/');
-        }
-    }
-}
-
 // Извлечение params из уже скомпилированного URLPattern (один exec, без повторного getCompiledPattern)
 // URLPattern кладёт сегменты * в groups с числовыми ключами — их не возвращаем.
 function parseParamsFromCompiled(compiled: URLPattern, pathname: string): Record<string, string> {
@@ -194,6 +221,8 @@ export function clearRouterCaches(): void {
     URL_CACHE.clear();
     lastEntriesKeysRef = null;
     lastKeyToIndexMap = null;
+    noNavSnapshot = null;
+    noNavSnapshotUrl = null;
 }
 
 export function useRouter(pattern?: string): UseRouterReturn {
@@ -205,14 +234,11 @@ export function useRouter(pattern?: string): UseRouterReturn {
     );
     const keyToIndexMap = getKeyToIndexMap(rawState.entriesKeys);
 
-    // 2. Производное состояние роутера (мемоизировано). Один вызов getCompiledPattern на рендер.
+    // 2. Производное состояние роутера. pathname/searchParams берём из snapshot (разбор URL один раз в store).
     const routerState: RouterState & {
         _entriesKeys: string[];
     } = useMemo(() => {
-        const currentEntry = navigation?.currentEntry ?? null;
-        const urlStr = currentEntry?.url ?? (isBrowser ? window.location.href : '/');
-        const parsed = getCachedParsedUrl(urlStr);
-        const pathname = parsed.pathname;
+        const { urlStr, pathname, searchParams } = rawState;
 
         let matched: boolean | undefined;
         let params: Record<string, string> = {};
@@ -227,13 +253,20 @@ export function useRouter(pattern?: string): UseRouterReturn {
         return {
             location: urlStr,
             pathname,
-            searchParams: parsed.searchParams,
+            searchParams,
             params,
             historyIndex,
             matched,
             _entriesKeys: rawState.entriesKeys,
         };
-    }, [navigation, rawState.currentKey, rawState.entriesKeys, pattern]);
+    }, [
+        rawState.currentKey,
+        rawState.entriesKeys,
+        rawState.urlStr,
+        rawState.pathname,
+        rawState.searchParams,
+        pattern,
+    ]);
 
     // 3. Навигационные операции. Только Navigation API — без Navigation состояние не обновляется.
     const navigate = useCallback(

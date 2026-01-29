@@ -27,7 +27,7 @@
         "vitest": "^4.0.18"
     },
     "scripts": {
-        "type-check": "tsc --noEmit",
+        "type-check": "tsc -build --noEmit",
         "lint": "prettier --check .",
         "test": "vitest",
         "test:ui": "vitest --ui",

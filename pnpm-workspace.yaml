@@ -1,2 +1,6 @@
+# Один пакет в корне; packages обязателен при наличии pnpm-workspace.yaml
+packages:
+    - '.'
+
 onlyBuiltDependencies:
-  - esbuild
+    - esbuild

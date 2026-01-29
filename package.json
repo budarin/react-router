@@ -13,26 +13,26 @@
     ],
     "author": "Vadim Budarin",
     "license": "MIT",
+    "devDependencies": {
+        "@testing-library/jest-dom": "^6.9.1",
+        "@testing-library/react": "^16.3.2",
+        "@types/react": "^19.2.10",
+        "@vitest/ui": "^4.0.18",
+        "jsdom": "^27.4.0",
+        "prettier": "^3.8.1",
+        "react": "^19.2.4",
+        "react-dom": "^19.2.4",
+        "typescript": "^5.7.3",
+        "urlpattern-polyfill": "^10.1.0",
+        "vitest": "^4.0.18"
+    },
     "scripts": {
         "type-check": "tsc --noEmit",
         "lint": "prettier --check .",
         "test": "vitest",
         "test:ui": "vitest --ui",
-        "test:run": "vitest run"
-    },
-    "devDependencies": {
-        "@testing-library/jest-dom": "^6.9.1",
-        "urlpattern-polyfill": "^10.1.0",
-        "@testing-library/react": "^16.3.1",
-        "@testing-library/react-hooks": "^8.0.1",
-        "@types/react": "^19.2.7",
-        "@vitest/ui": "^4.0.16",
-        "jsdom": "^27.3.0",
-        "prettier": "^3.7.4",
-        "react": "^19.2.3",
-        "react-dom": "^19.2.3",
-        "typescript": "^5.7.3",
-        "vitest": "^4.0.16"
-    },
-    "packageManager": "pnpm@10.28.2+sha512.41872f037ad22f7348e3b1debbaf7e867cfd448f2726d9cf74c08f19507c31d2c8e7a11525b983febc2df640b5438dee6023ebb1f84ed43cc2d654d2bc326264"
+        "test:run": "vitest run",
+        "pnpm-install": "pnpm install",
+        "upgrade-deps": "sh scripts/upgrade-deps.sh"
+    }
 }

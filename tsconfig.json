@@ -40,6 +40,6 @@
             "@budarin/react-router/*": ["src/*"]
         }
     },
-    "include": ["src"],
+    "include": ["src", "samples"],
     "exclude": ["dist", "node_modules"]
 }

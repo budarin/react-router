@@ -1,0 +1,29 @@
+---
+description: Type rules — semantic aliases, avoid bare string/number
+globs: **/*.ts
+alwaysApply: false
+---
+
+# Type rules
+
+## Semantic aliases over bare primitives
+
+Where a string/number has clear domain meaning — use a named type alias, not bare `string` or `number`.
+
+**Example:**
+
+```ts
+// ❌ Bad
+const cache = new Map<string, URL>();
+function parse(url: string): URL { ... }
+
+// ✅ Good
+type UrlString = string;
+
+const cache = new Map<UrlString, URL>();
+function parse(url: UrlString): URL { ... }
+```
+
+**When to add an alias:** same meaning repeated in signatures, Map/Record keys, or type fields — add type in `types.ts` with short JSDoc.
+
+**When to keep simple:** one-off params with obvious meaning from arg name can stay `string`/`number`; interfaces mirroring external API (e.g. Navigation) may stay without aliases.

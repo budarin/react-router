@@ -4,6 +4,12 @@ import type {
     NavigateOptions,
     UseRouterReturn,
     NavigationNavigateOptions,
+    UrlString,
+    PathPattern,
+    Pathname,
+    NavigationEntryKey,
+    RouteParams,
+    HistoryIndex,
 } from './types';
 
 import { getRouterConfig, getLogger } from './types';
@@ -13,7 +19,7 @@ import { useSyncExternalStore, useCallback, useMemo } from 'react';
 const isBrowser = typeof window !== 'undefined';
 
 // Валидация URL: разрешаем только http://, https:// и относительные пути
-function isValidUrl(url: string): boolean {
+function isValidUrl(url: UrlString): boolean {
     if (!url || typeof url !== 'string') return false;
 
     // Относительные пути всегда валидны
@@ -29,17 +35,17 @@ function isValidUrl(url: string): boolean {
 }
 
 // Проверка соответствия паттерна pathname (только URLPattern)
-function testPattern(compiled: URLPattern, pathname: string): boolean {
+function testPattern(compiled: URLPattern, pathname: Pathname): boolean {
     return compiled.test({ pathname });
 }
 
 // Общий LRU-кэш URL → разобранный URL (используется в snapshot, один раз на текущий URL)
-const URL_CACHE = new Map<string, URL>();
+const URL_CACHE = new Map<UrlString, URL>();
 
 /**
  * Парсит URL с LRU-кэшем. При ошибке парсинга не кэширует — возвращает fallback URL.
  */
-function getCachedParsedUrl(urlStr: string): URL {
+function getCachedParsedUrl(urlStr: UrlString): URL {
     const cache = URL_CACHE;
     const existing = cache.get(urlStr);
     if (existing !== undefined) {
@@ -70,12 +76,12 @@ function getCachedParsedUrl(urlStr: string): URL {
 // Общий store для navigation: один снимок и 2 слушателя на всё приложение (вместо 2N при N хуках).
 // Разбор текущего URL (pathname, searchParams) делается один раз при обновлении snapshot, не в каждом хуке.
 type NavigationSnapshot = {
-    currentKey: string;
+    currentKey: NavigationEntryKey;
     canGoBackFlag: boolean;
     canGoForwardFlag: boolean;
-    entriesKeys: string[];
-    urlStr: string;
-    pathname: string;
+    entriesKeys: NavigationEntryKey[];
+    urlStr: UrlString;
+    pathname: Pathname;
     searchParams: URLSearchParams;
 };
 
@@ -146,7 +152,7 @@ function subscribeToNavigation(callback: () => void): () => void {
 }
 
 let noNavSnapshot: NavigationSnapshot | null = null;
-let noNavSnapshotUrl: string | null = null;
+let noNavSnapshotUrl: UrlString | null = null;
 
 function getNavigationSnapshot(): NavigationSnapshot {
     if (sharedSnapshot !== null) return sharedSnapshot;
@@ -170,24 +176,26 @@ function getNavigationSnapshot(): NavigationSnapshot {
 }
 
 // Один keyToIndexMap на снимок (один на все хуки при общем rawState)
-let lastEntriesKeysRef: string[] | null = null;
-let lastKeyToIndexMap: Map<string, number> | null = null;
+let lastEntriesKeysRef: NavigationEntryKey[] | null = null;
+let lastKeyToIndexMap: Map<NavigationEntryKey, HistoryIndex> | null = null;
 
-function getKeyToIndexMap(entriesKeys: string[]): Map<string, number> {
+function getKeyToIndexMap(
+    entriesKeys: NavigationEntryKey[]
+): Map<NavigationEntryKey, HistoryIndex> {
     if (entriesKeys === lastEntriesKeysRef && lastKeyToIndexMap !== null) {
         return lastKeyToIndexMap;
     }
     lastEntriesKeysRef = entriesKeys;
-    const map = new Map<string, number>();
+    const map = new Map<NavigationEntryKey, HistoryIndex>();
     entriesKeys.forEach((key, index) => map.set(key, index));
     lastKeyToIndexMap = map;
     return map;
 }
 
-// Кэш скомпилированных URLPattern[web:140][web:221]
-const PATTERN_CACHE = new Map<string, URLPattern>();
+// Кэш скомпилированных URLPattern
+const PATTERN_CACHE = new Map<PathPattern, URLPattern>();
 
-function getCompiledPattern(pattern: string): URLPattern {
+function getCompiledPattern(pattern: PathPattern): URLPattern {
     let compiled = PATTERN_CACHE.get(pattern);
     if (!compiled) {
         compiled = new URLPattern({ pathname: pattern });
@@ -198,12 +206,12 @@ function getCompiledPattern(pattern: string): URLPattern {
 
 // Извлечение params из уже скомпилированного URLPattern (один exec, без повторного getCompiledPattern)
 // URLPattern кладёт сегменты * в groups с числовыми ключами — их не возвращаем.
-function parseParamsFromCompiled(compiled: URLPattern, pathname: string): Record<string, string> {
+function parseParamsFromCompiled(compiled: URLPattern, pathname: Pathname): RouteParams {
     const match = compiled.exec({ pathname });
-    const groups = (match?.pathname.groups ?? {}) as Record<string, string>;
+    const groups = (match?.pathname.groups ?? {}) as RouteParams;
     return Object.fromEntries(
         Object.entries(groups).filter(([key]) => !/^\d+$/.test(key))
-    ) as Record<string, string>;
+    ) as RouteParams;
 }
 
 // Экспортируем configureRouter и очистку кэшей (для тестов / смены окружения)
@@ -236,12 +244,12 @@ export function useRouter<P extends string = string>(pattern?: P): UseRouterRetu
 
     // 2. Производное состояние роутера. pathname/searchParams берём из snapshot (разбор URL один раз в store).
     const routerState: RouterState & {
-        _entriesKeys: string[];
+        _entriesKeys: NavigationEntryKey[];
     } = useMemo(() => {
         const { urlStr, pathname, searchParams } = rawState;
 
         let matched: boolean | undefined;
-        let params: Record<string, string> = {};
+        let params: RouteParams = {};
         if (pattern) {
             const compiled = getCompiledPattern(pattern);
             const patternMatched = testPattern(compiled, pathname);

@@ -64,6 +64,26 @@ export interface Navigation extends EventTarget {
     updateCurrentEntry(options?: { state?: unknown }): void;
 }
 
+// ===== Семантические алиасы (избегаем голых string/number где есть смысл) =====
+
+/** Строка — полный URL. */
+export type UrlString = string;
+
+/** Строка — паттерн пути (например '/users/:id'). */
+export type PathPattern = string;
+
+/** Строка — pathname, часть пути URL (например '/users/123'). */
+export type Pathname = string;
+
+/** Ключ записи в Navigation API (history entry key). */
+export type NavigationEntryKey = string;
+
+/** Индекс в истории навигации. */
+export type HistoryIndex = number;
+
+/** Параметры маршрута: имя параметра → значение (из pathname по паттерну). */
+export type RouteParams = Record<string, string>;
+
 // ===== Публичный API хука =====
 
 /** Извлекает тип params из строки паттерна: '/users/:id' → { id: string } */
@@ -77,17 +97,17 @@ export type ExtractRouteParams<T extends string> =
 /** Тип params для useRouter(pattern): литерал пути → типизированные ключи, string/undefined → Record или {} */
 export type ParamsForPath<P> = [P] extends [string]
     ? string extends P
-        ? Record<string, string>
+        ? RouteParams
         : ExtractRouteParams<P>
     : Record<string, never>;
 
 export interface RouterState {
-    location: string; // полный URL
-    pathname: string; // path (/users/123)
+    location: UrlString;
+    pathname: Pathname;
     /** Только чтение. Мутировать не следует — не меняет реальный URL. */
-    searchParams: URLSearchParams; // ?page=1
-    params: Record<string, string>; // { id: '123' } из паттерна
-    historyIndex: number; // индекс в истории или -1
+    searchParams: URLSearchParams;
+    params: RouteParams;
+    historyIndex: HistoryIndex;
     /** true, если передан pattern и он совпал с pathname; false при несовпадении; undefined, если pattern не передан */
     matched?: boolean;
 }

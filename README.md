@@ -21,10 +21,10 @@
 [![bundle](https://img.shields.io/bundlephobia/minzip/@budarin/use-route)](https://bundlephobia.com/result?p=@budarin/use-route)
 [![GitHub](https://img.shields.io/github/license/budarin/use-route)](https://github.com/budarin/use-route)
 
-**Живое демо:** запуск в браузере без установки; исходники в папке [demo/](https://github.com/budarin/use-route/tree/master/demo). Чтобы открыть в новой вкладке: Ctrl+клик (Cmd+клик на Mac).
+**Живое демо:** запуск в браузере без установки; исходники в папке [demo/](https://github.com/budarin/use-route/tree/master/demo).
 
 - [Open in StackBlitz](https://stackblitz.com/github/budarin/use-route/tree/master/demo)
-- [Open in CodeSandbox](https://githubbox.com/budarin/use-route/tree/master/demo) — если StackBlitz недоступен (например, в РФ без VPN)
+- [Open in CodeSandbox](https://codesandbox.io/p/sandbox/github/budarin/use-route/tree/master/demo)
 
 ## ✨ Особенности
 

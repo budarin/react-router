@@ -1,0 +1,160 @@
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family:
+        system-ui,
+        -apple-system,
+        sans-serif;
+    line-height: 1.5;
+    color: #1a1a1a;
+    background: #f5f5f5;
+}
+
+#root {
+    min-height: 100vh;
+}
+
+a {
+    color: #0066cc;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+button {
+    font: inherit;
+    cursor: pointer;
+    padding: 0.4em 0.8em;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #fff;
+}
+
+button:hover:not(:disabled) {
+    background: #f0f0f0;
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.demo-nav {
+    background: #fff;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.demo-nav-url {
+    font-size: 0.85rem;
+    color: #555;
+}
+
+.demo-nav-url code {
+    background: #f0f0f0;
+    padding: 0.2em 0.4em;
+    border-radius: 4px;
+    word-break: break-all;
+}
+
+.demo-nav-links {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 1rem;
+}
+
+.demo-nav a,
+.demo-nav .nav-link {
+    padding: 0.25em 0.5em;
+    border-radius: 4px;
+}
+
+.demo-nav a.active,
+.demo-nav .nav-link.active {
+    background: #e8f0fe;
+    color: #1967d2;
+}
+
+.demo-content {
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 1.5rem 1rem;
+    background: #fff;
+    min-height: calc(100vh - 52px);
+    border-radius: 0 0 8px 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+.demo-content h1 {
+    margin-top: 0;
+    font-size: 1.5rem;
+}
+
+.demo-content .demo-lead {
+    color: #444;
+    margin-bottom: 1rem;
+    padding: 0.75rem;
+    background: #f8f9fa;
+    border-radius: 6px;
+    border-left: 3px solid #0066cc;
+}
+
+.demo-content h2 {
+    font-size: 1.1rem;
+    margin: 1rem 0 0.5rem;
+}
+
+.demo-content code {
+    background: #f0f0f0;
+    padding: 0.1em 0.3em;
+    border-radius: 3px;
+    font-size: 0.9em;
+}
+
+.demo-content pre {
+    background: #f5f5f5;
+    padding: 0.75rem;
+    border-radius: 4px;
+    overflow-x: auto;
+    font-size: 0.85em;
+}
+
+.demo-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.demo-list li {
+    margin: 0.5rem 0;
+}
+
+.demo-list a {
+    display: inline-block;
+    padding: 0.35em 0.5em;
+    border-radius: 4px;
+    background: #f0f0f0;
+}
+
+.demo-list a:hover {
+    background: #e0e0e0;
+    text-decoration: none;
+}
+
+.demo-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0;
+}

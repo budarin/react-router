@@ -17,9 +17,12 @@
 
 [![CI](https://github.com/budarin/use-route/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/budarin/use-route/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@budarin/use-route?color=cb0000)](https://www.npmjs.com/package/@budarin/use-route)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/budarin/use-route/tree/master/demo)
 [![npm](https://img.shields.io/npm/dt/@budarin/use-route)](https://www.npmjs.com/package/@budarin/use-route)
 [![bundle](https://img.shields.io/bundlephobia/minzip/@budarin/use-route)](https://bundlephobia.com/result?p=@budarin/use-route)
 [![GitHub](https://img.shields.io/github/license/budarin/use-route)](https://github.com/budarin/use-route)
+
+**Живое демо:** [Open in StackBlitz](https://stackblitz.com/github/budarin/use-route/tree/master/demo) — запуск в браузере без установки; исходники в папке [`demo/`](https://github.com/budarin/use-route/tree/master/demo).
 
 ## ✨ Особенности
 

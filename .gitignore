@@ -41,6 +41,9 @@ build/Release
 node_modules/
 jspm_packages/
 
+# pnpm store (должен быть глобальным, см. .npmrc)
+.pnpm-store/
+
 # Snowpack dependency directory (https://snowpack.dev/)
 web_modules/
 

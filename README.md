@@ -347,7 +347,68 @@ function UserPostsExample() {
 }
 ```
 
-### 8. Компонент Link (пример реализации)
+### 8. base (базовый путь)
+
+Приложение раздаётся по подпути (например `https://example.com/app/`). В конфиге задаёте `base: '/app'` — тогда `pathname` возвращается без префикса, а `navigate(to)` добавляет base к относительным путям. Для одноразового перехода «вне» base (например на страницу логина) используйте опцию `base` в `navigate` или `replace`.
+
+```tsx
+import { useRoute, configureRouter } from '@budarin/use-route';
+configureRouter({ base: '/app' });
+
+function AppUnderBase() {
+    const { pathname, navigate } = useRoute();
+
+    return (
+        <div>
+            <p>Текущий путь: {pathname}</p>
+
+            <button type="button" onClick={() => navigate('/dashboard')}>
+                В дашборд → /app/dashboard
+            </button>
+
+            <button type="button" onClick={() => navigate('/login', { base: '' })}>
+                На логин (/login)
+            </button>
+
+            <button type="button" onClick={() => navigate('/auth/profile', { base: '/auth' })}>
+                В другой раздел (/auth/profile)
+            </button>
+        </div>
+    );
+}
+```
+
+### 9. initialLocation (SSR)
+
+При рендере на сервере нет `window`, поэтому хук не знает URL запроса. Задайте `initialLocation` в конфиге один раз перед рендером запроса (например `request.url`) — тогда `pathname` и `searchParams` будут соответствовать запросу. На клиенте `initialLocation` не используется.
+
+```tsx
+// Серверный обработчик (псевдокод: Express, Fastify, Next и т.д.)
+import { configureRouter } from '@budarin/use-route';
+import { renderToStaticMarkup } from 'react-dom/server';
+import { App } from './App';
+
+function handleRequest(req, res) {
+    // Один раз перед рендером этого запроса
+    configureRouter({ initialLocation: req.url });
+
+    const html = renderToStaticMarkup(<App />);
+    res.send(html);
+}
+
+// В App компоненты используют useRoute() — на сервере получают pathname/searchParams из initialLocation
+function App() {
+    const { pathname, searchParams } = useRoute();
+    return (
+        <div>
+            <p>Pathname: {pathname}</p>
+            <p>Query: {searchParams.toString()}</p>
+        </div>
+    );
+}
+```
+
+### 10. Компонент Link (пример реализации)
 
 Минимальный пример компонента-ссылки поверх хука. Можно взять за основу и развивать под себя: активное состояние, префетч, аналитика, стили.
 

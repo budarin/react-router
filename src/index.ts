@@ -6,10 +6,11 @@ import type {
     PathMatcher,
     RouteParams,
     HistoryIndex,
-    NavigateOptions,
     UseRouteReturn,
+    NavigateOptions,
     NavigationEntryKey,
 } from './types';
+
 import type { Navigation, NavigationNavigateOptions } from './native-api-types';
 
 import { getRouterConfig, getLogger } from './types';
@@ -37,6 +38,15 @@ function isValidUrl(url: UrlString): boolean {
 // Проверка соответствия паттерна pathname (только URLPattern)
 function testPattern(compiled: URLPattern, pathname: Pathname): boolean {
     return compiled.test({ pathname });
+}
+
+/** pathname без базового префикса (для возврата из хука при заданном base). */
+function pathnameWithoutBase(pathname: Pathname, base: string | undefined): Pathname {
+    if (!base || base === '/') return pathname;
+    if (pathname === base || pathname.startsWith(base + '/')) {
+        return pathname === base ? '/' : pathname.slice(base.length);
+    }
+    return pathname;
 }
 
 // Общий LRU-кэш URL → разобранный URL (используется в snapshot, один раз на текущий URL)
@@ -161,8 +171,8 @@ function getNavigationSnapshot(): NavigationSnapshot {
         sharedSnapshot = computeNavigationSnapshot(nav);
         return sharedSnapshot;
     }
-    // Нет Navigation API (тесты, старый браузер) — URL из window.location, разбор один раз через кэш
-    const urlStr = isBrowser ? window.location.href : '/';
+    // Нет Navigation API (тесты, старый браузер, SSR) — URL из window.location или из конфига (initialLocation для SSR)
+    const urlStr = isBrowser ? window.location.href : (getRouterConfig().initialLocation ?? '/');
     if (noNavSnapshot !== null && noNavSnapshotUrl === urlStr) return noNavSnapshot;
     const parsed = getCachedParsedUrl(urlStr);
     noNavSnapshotUrl = urlStr;
@@ -219,6 +229,9 @@ export {
     configureRouter,
     type LoggerLevel,
     type Logger,
+    type NavigateOptions,
+    type ReplaceOptions,
+    type UseRouteReturn,
     type ExtractRouteParams,
     type ParamsForPath,
     type PathMatcher,
@@ -249,7 +262,9 @@ export function useRoute<P extends string | PathMatcher = string>(pattern?: P): 
     const routerState: RouterState & {
         _entriesKeys: NavigationEntryKey[];
     } = useMemo(() => {
-        const { urlStr, pathname, searchParams } = rawState;
+        const config = getRouterConfig();
+        const { urlStr, pathname: rawPathname, searchParams } = rawState;
+        const pathname = pathnameWithoutBase(rawPathname, config.base);
 
         let matched: boolean | undefined;
         let params: RouteParams = {};
@@ -283,12 +298,30 @@ export function useRoute<P extends string | PathMatcher = string>(pattern?: P): 
         rawState.pathname,
         rawState.searchParams,
         pattern,
+        getRouterConfig().base,
     ]);
 
     // 3. Навигационные операции. Только Navigation API — без Navigation состояние не обновляется.
     const navigate = useCallback(
         async (to: string | URL, options: NavigateOptions = {}): Promise<void> => {
-            const targetUrl = typeof to === 'string' ? to : to.toString();
+            let targetUrl = typeof to === 'string' ? to : to.toString();
+            const configBase = getRouterConfig().base;
+            const baseForCall =
+                options.base !== undefined
+                    ? options.base === '' || options.base === '/'
+                        ? undefined
+                        : options.base
+                    : configBase;
+            if (
+                baseForCall &&
+                baseForCall !== '/' &&
+                typeof to === 'string' &&
+                to.startsWith('/') &&
+                !to.startsWith('//') &&
+                !to.includes(':')
+            ) {
+                targetUrl = baseForCall + (to === '/' ? '' : to);
+            }
 
             if (!isValidUrl(targetUrl)) {
                 getLogger().warn('[useRoute] Invalid URL rejected:', targetUrl);
@@ -397,7 +430,12 @@ export function useRoute<P extends string | PathMatcher = string>(pattern?: P): 
     );
 
     const replace = useCallback(
-        (to: string | URL, state?: unknown) => navigate(to, { history: 'replace', state }),
+        (to: string | URL, state?: unknown, replaceOptions?: { state?: unknown; base?: string }) =>
+            navigate(to, {
+                history: 'replace',
+                state: replaceOptions?.state ?? state,
+                base: replaceOptions?.base,
+            }),
         [navigate]
     );
 

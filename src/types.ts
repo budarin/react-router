@@ -59,6 +59,15 @@ export interface NavigateOptions {
     /** 'replace' — заменить текущую запись, 'push' — новая запись, 'auto' — по умолчанию (браузер решает). */
     history?: 'push' | 'replace' | 'auto';
     state?: unknown;
+    /** Базовый путь для этого вызова. undefined — из configureRouter; '' или '/' — не добавлять префикс; иначе — этот путь как префикс (переход по другому base). */
+    base?: string;
+}
+
+/** Опции для replace(): state и одноразовый base. */
+export interface ReplaceOptions {
+    state?: unknown;
+    /** Базовый путь для этого вызова (см. NavigateOptions.base). */
+    base?: string;
 }
 
 export type UseRouteReturn<P extends string | PathMatcher | undefined = undefined> = Omit<
@@ -71,7 +80,7 @@ export type UseRouteReturn<P extends string | PathMatcher | undefined = undefine
     back: () => void;
     forward: () => void;
     go: (delta: number) => void;
-    replace: (to: string | URL, state?: unknown) => Promise<void>;
+    replace: (to: string | URL, state?: unknown, replaceOptions?: ReplaceOptions) => Promise<void>;
     canGoBack: (steps?: number) => boolean;
     canGoForward: (steps?: number) => boolean;
 };
@@ -95,6 +104,10 @@ export interface RouterConfig {
     defaultHistory?: 'push' | 'replace' | 'auto';
     /** Логгер (по умолчанию: console) */
     logger?: Logger;
+    /** Базовый путь приложения (например '/app'). pathname возвращается без base; navigate(to) добавляет base к относительным путям. */
+    base?: string;
+    /** Начальный URL для SSR: при рендере на сервере (нет window) используется этот URL для pathname/searchParams. Задаётся один раз перед рендером запроса (например request.url). */
+    initialLocation?: string;
 }
 
 // Внутренняя конфигурация (не экспортируется)

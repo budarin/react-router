@@ -97,8 +97,11 @@ function App() {
 {
     history?: 'push' | 'replace' | 'auto'; // по умолчанию из configureRouter или 'auto'
     state?: unknown;
+    base?: string; // базовый путь для этого вызова: undefined — из конфига; '' или '/' — без префикса; иначе — другой base (напр. '/auth' для перехода на /auth/login)
 }
 ```
+
+**`replace(to, state?, options?)`** — то же, что `navigate(to, { history: 'replace', state })`. Третий аргумент `options?: { state?: unknown; base?: string }` — для переопределения state и одноразового `base`.
 
 **`configureRouter(config)`** — глобальная настройка один раз при старте приложения:
 
@@ -107,8 +110,14 @@ configureRouter({
     urlCacheLimit: 50, // лимит LRU-кэша URL (по умолчанию 50)
     defaultHistory: 'replace', // history по умолчанию для всех navigate()
     logger: myLogger, // логгер (дефолт: console)
+    base: '/app', // базовый путь: pathname без base, navigate(to) добавляет base к относительным путям
+    initialLocation: request.url, // для SSR: начальный URL при рендере на сервере (нет window)
 });
 ```
+
+**`base`** — если приложение раздаётся по подпути (например `/app/`), задайте `base: '/app'`. Тогда `pathname` возвращается без префикса (`/dashboard` вместо `/app/dashboard`), а `navigate('/dashboard')` перейдёт на `/app/dashboard`. **По умолчанию задавать не нужно:** если `base` не указан, префикс не используется — `pathname` как в URL, `navigate(to)` переходит по переданному пути.
+
+**`initialLocation`** — при SSR (нет `window`) хук не знает URL запроса. Задайте `initialLocation: request.url` (или полный URL страницы) один раз перед рендером запроса — тогда `pathname` и `searchParams` будут соответствовать запросу. На клиенте не используется. **По умолчанию задавать не нужно:** если на SSR `initialLocation` не задан, используется `'/'` (pathname и searchParams для корня).
 
 **Логгер:** тип `Logger` — объект с методами `trace`, `debug`, `info`, `warn`, `error` (как у `console`). Уровни: `LoggerLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error'`. Если не передан — используется `console`.
 

@@ -306,6 +306,205 @@ describe('useRoute', () => {
         });
     });
 
+    describe('base (базовый путь)', () => {
+        afterEach(() => {
+            configureRouter({ base: undefined });
+        });
+
+        it('pathname возвращается без base', () => {
+            configureRouter({ base: '/app' });
+            window.location.pathname = '/app/dashboard';
+            window.location.href = 'http://localhost/app/dashboard';
+
+            const { result } = renderHook(() => useRoute());
+
+            expect(result.current.pathname).toBe('/dashboard');
+        });
+
+        it('navigate(to) добавляет base к относительному пути', async () => {
+            configureRouter({ base: '/app' });
+            const mockNavigate = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'k0', url: 'http://localhost/app/' },
+                entries: () => [{ key: 'k0' }],
+                canGoBack: false,
+                canGoForward: false,
+                navigate: mockNavigate,
+            };
+
+            const { result } = renderHook(() => useRoute());
+
+            await act(async () => {
+                await result.current.navigate('/users/1');
+            });
+
+            expect(mockNavigate).toHaveBeenCalledWith('/app/users/1', expect.any(Object));
+
+            delete (window as any).navigation;
+        });
+
+        it('navigate(to, { base: "" }) не добавляет префикс — переход без base', async () => {
+            configureRouter({ base: '/app' });
+            const mockNavigate = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'k0', url: 'http://localhost/app/' },
+                entries: () => [{ key: 'k0' }],
+                canGoBack: false,
+                canGoForward: false,
+                navigate: mockNavigate,
+            };
+
+            const { result } = renderHook(() => useRoute());
+
+            await act(async () => {
+                await result.current.navigate('/login', { base: '' });
+            });
+
+            expect(mockNavigate).toHaveBeenCalledWith('/login', expect.any(Object));
+
+            delete (window as any).navigation;
+        });
+
+        it('navigate(to, { base: "/auth" }) использует другой base для этого вызова', async () => {
+            configureRouter({ base: '/app' });
+            const mockNavigate = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'k0', url: 'http://localhost/app/' },
+                entries: () => [{ key: 'k0' }],
+                canGoBack: false,
+                canGoForward: false,
+                navigate: mockNavigate,
+            };
+
+            const { result } = renderHook(() => useRoute());
+
+            await act(async () => {
+                await result.current.navigate('/login', { base: '/auth' });
+            });
+
+            expect(mockNavigate).toHaveBeenCalledWith('/auth/login', expect.any(Object));
+
+            delete (window as any).navigation;
+        });
+
+        it('pathname при нахождении в корне base возвращает "/"', () => {
+            configureRouter({ base: '/app' });
+            window.location.pathname = '/app';
+            window.location.href = 'http://localhost/app';
+
+            const { result } = renderHook(() => useRoute());
+
+            expect(result.current.pathname).toBe('/');
+        });
+
+        it('replace(to, undefined, { base: "/auth" }) использует другой base для этого вызова', async () => {
+            configureRouter({ base: '/app' });
+            const mockNavigate = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'k0', url: 'http://localhost/app/' },
+                entries: () => [{ key: 'k0' }],
+                canGoBack: false,
+                canGoForward: false,
+                navigate: mockNavigate,
+            };
+
+            const { result } = renderHook(() => useRoute());
+
+            await act(async () => {
+                await result.current.replace('/login', undefined, { base: '/auth' });
+            });
+
+            expect(mockNavigate).toHaveBeenCalledWith(
+                '/auth/login',
+                expect.objectContaining({ history: 'replace' })
+            );
+
+            delete (window as any).navigation;
+        });
+    });
+
+    describe('initialLocation (SSR) — снимок из URL при отсутствии Navigation API', () => {
+        afterEach(() => {
+            configureRouter({ initialLocation: undefined });
+        });
+
+        it('при отсутствии Navigation API pathname и searchParams берутся из window.location (та же логика, что для initialLocation на SSR)', () => {
+            delete (window as any).navigation;
+            window.location.pathname = '/users/123';
+            window.location.href = 'http://localhost/users/123';
+            window.location.search = '';
+
+            clearRouterCaches();
+
+            const { result } = renderHook(() => useRoute());
+
+            expect(result.current.pathname).toBe('/users/123');
+            expect(result.current.location).toBe('http://localhost/users/123');
+
+            // Восстанавливаем navigation для остальных тестов (beforeEach в родителе не трогает navigation)
+            (window as any).navigation = undefined;
+        });
+
+        it('при отсутствии Navigation API searchParams парсятся из window.location.search', () => {
+            delete (window as any).navigation;
+            window.location.pathname = '/posts';
+            window.location.search = '?page=2&sort=date';
+            window.location.href = 'http://localhost/posts?page=2&sort=date';
+
+            clearRouterCaches();
+
+            const { result } = renderHook(() => useRoute());
+
+            expect(result.current.pathname).toBe('/posts');
+            expect(result.current.searchParams.get('page')).toBe('2');
+            expect(result.current.searchParams.get('sort')).toBe('date');
+
+            (window as any).navigation = undefined;
+        });
+
+        it('при отсутствии Navigation API и заданном base pathname возвращается без base', () => {
+            delete (window as any).navigation;
+            configureRouter({ base: '/app' });
+            window.location.pathname = '/app/dashboard';
+            window.location.href = 'http://localhost/app/dashboard';
+            window.location.search = '';
+            clearRouterCaches();
+
+            const { result } = renderHook(() => useRoute());
+
+            expect(result.current.pathname).toBe('/dashboard');
+
+            configureRouter({ base: undefined });
+            (window as any).navigation = undefined;
+        });
+
+        it('configureRouter({ initialLocation }) принимает значение; на SSR (нет window) хук использует его для снимка вместо window', () => {
+            configureRouter({ initialLocation: 'http://localhost/ssr-page?foo=bar' });
+            // На SSR тот же код строит снимок из initialLocation; в jsdom проверяем только, что конфиг не падает
+            configureRouter({ initialLocation: undefined });
+        });
+    });
+
     describe('Валидация URL', () => {
         it('должен отклонять javascript: URL', async () => {
             const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});

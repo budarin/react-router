@@ -16,3 +16,6 @@ pnpm-workspace.yaml
 # IDE и окружение ( .git и .gitignore npm исключает по умолчанию )
 .vscode/
 .cursor/
+
+# Репозиторий (CI и т.п.)
+.github/

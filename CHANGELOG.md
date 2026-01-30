@@ -5,7 +5,7 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [Semantic Versioning](https://semver.org/lang/ru/).
 
-## [1.1.0] - 2025-01-30
+## [1.1.1] - 2025-01-30
 
 ### Добавлено
 

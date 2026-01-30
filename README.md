@@ -479,12 +479,12 @@ npm i urlpattern-polyfill
 import 'urlpattern-polyfill';
 ```
 
-## 🌐 Браузеры
+## 🌐 Браузеры и Node.js
 
-| API            | Chrome/Edge | Firefox | Safari |
-| -------------- | ----------- | ------- | ------ |
-| Navigation API | 102+        | 109+    | 16.4+  |
-| URLPattern     | 110+        | 115+    | 16.4+  |
+| API            | Chrome/Edge | Firefox | Safari | Node.js  |
+| -------------- | ----------- | ------- | ------ | -------- |
+| Navigation API | 102+        | 109+    | 16.4+  | —        |
+| URLPattern     | 110+        | 115+    | 16.4+  | 23.8+    |
 
 Роутер рассчитан только на эти версии, fallback на History API нет.
 

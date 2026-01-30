@@ -15,6 +15,7 @@
 
 История формируется динамически: при каждом переходе можно выбрать `push` или `replace`.
 
+[![CI](https://github.com/budarin/use-route/actions/workflows/ci.yml/badge.svg)](https://github.com/budarin/use-route/actions/workflows/ci.yml)
 [![npm](https://img.shields.io/npm/v/@budarin/use-route?color=cb0000)](https://www.npmjs.com/package/@budarin/use-route)
 [![npm](https://img.shields.io/npm/dt/@budarin/use-route)](https://www.npmjs.com/package/@budarin/use-route)
 [![bundle](https://img.shields.io/bundlephobia/minzip/@budarin/use-route)](https://bundlephobia.com/result?p=@budarin/use-route)

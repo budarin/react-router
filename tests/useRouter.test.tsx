@@ -1,6 +1,13 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
-import { useRouter, clearRouterCaches, configureRouter } from '../src/index';
+import {
+    useRouter,
+    clearRouterCaches,
+    configureRouter,
+    type PathMatcher,
+    type Pathname,
+    type RouteParams,
+} from '../src/index';
 
 describe('useRouter', () => {
     let originalWindow: typeof window;
@@ -170,6 +177,36 @@ describe('useRouter', () => {
                 month: '02',
             });
             expect(result.current.matched).toBe(true);
+        });
+    });
+
+    describe('PathMatcher (function)', () => {
+        const matcher: PathMatcher = (pathname: Pathname) => {
+            if (pathname === '/cps/123') {
+                return { matched: true, params: { cpId: '123' } };
+            }
+            const emptyParams: RouteParams = {};
+            return { matched: false, params: emptyParams };
+        };
+
+        it('при совпадении возвращает matched: true и params из матчера', () => {
+            window.location.pathname = '/cps/123';
+            window.location.href = 'http://localhost/cps/123';
+
+            const { result } = renderHook(() => useRouter(matcher));
+
+            expect(result.current.matched).toBe(true);
+            expect(result.current.params).toEqual({ cpId: '123' });
+        });
+
+        it('при несовпадении возвращает matched: false и params: {}', () => {
+            window.location.pathname = '/other';
+            window.location.href = 'http://localhost/other';
+
+            const { result } = renderHook(() => useRouter(matcher));
+
+            expect(result.current.matched).toBe(false);
+            expect(result.current.params).toEqual({});
         });
     });
 

@@ -3,6 +3,7 @@ import type {
     UrlString,
     RouterState,
     PathPattern,
+    PathMatcher,
     RouteParams,
     HistoryIndex,
     NavigateOptions,
@@ -220,6 +221,9 @@ export {
     type Logger,
     type ExtractRouteParams,
     type ParamsForPath,
+    type PathMatcher,
+    type Pathname,
+    type RouteParams,
 } from './types';
 
 /** Очищает кэши паттернов и URL. Для тестов или при смене base/origin. */
@@ -232,7 +236,9 @@ export function clearRouterCaches(): void {
     noNavSnapshotUrl = null;
 }
 
-export function useRouter<P extends string = string>(pattern?: P): UseRouterReturn<P> {
+export function useRouter<P extends string | PathMatcher = string>(
+    pattern?: P
+): UseRouterReturn<P> {
     const navigation = getNavigation();
     const rawState = useSyncExternalStore(
         subscribeToNavigation,
@@ -250,10 +256,16 @@ export function useRouter<P extends string = string>(pattern?: P): UseRouterRetu
         let matched: boolean | undefined;
         let params: RouteParams = {};
         if (pattern) {
-            const compiled = getCompiledPattern(pattern);
-            const patternMatched = testPattern(compiled, pathname);
-            matched = patternMatched;
-            params = patternMatched ? parseParamsFromCompiled(compiled, pathname) : {};
+            if (typeof pattern === 'function') {
+                const result = pattern(pathname);
+                matched = result.matched;
+                params = result.params;
+            } else {
+                const compiled = getCompiledPattern(pattern);
+                const patternMatched = testPattern(compiled, pathname);
+                matched = patternMatched;
+                params = patternMatched ? parseParamsFromCompiled(compiled, pathname) : {};
+            }
         }
         const historyIndex = keyToIndexMap.get(rawState.currentKey) ?? -1;
 

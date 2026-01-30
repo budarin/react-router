@@ -13,8 +13,17 @@ export type NavigationEntryKey = string;
 /** Индекс в истории навигации. */
 export type HistoryIndex = number;
 
+/** Имя параметра маршрута (ключ в params). */
+export type RouteParamName = string;
+
+/** Значение параметра маршрута (сегмент pathname). */
+export type RouteParamValue = string;
+
 /** Параметры маршрута: имя параметра → значение (из pathname по паттерну). */
-export type RouteParams = Record<string, string>;
+export type RouteParams = Record<RouteParamName, RouteParamValue>;
+
+/** Функция-матчер пути: pathname → matched и params. Для иерархических/кастомных маршрутов. */
+export type PathMatcher = (pathname: Pathname) => { matched: boolean; params: RouteParams };
 
 // ===== Публичный API хука =====
 
@@ -26,12 +35,14 @@ export type ExtractRouteParams<T extends string> =
           ? { [K in Param]: string }
           : Record<string, never>;
 
-/** Тип params для useRouter(pattern): литерал пути → типизированные ключи, string/undefined → Record или {} */
-export type ParamsForPath<P> = [P] extends [string]
-    ? string extends P
-        ? RouteParams
-        : ExtractRouteParams<P>
-    : Record<string, never>;
+/** Тип params для useRouter(pattern): литерал пути → типизированные ключи; PathMatcher → RouteParams; иначе {} */
+export type ParamsForPath<P> = P extends PathMatcher
+    ? RouteParams
+    : [P] extends [string]
+      ? string extends P
+          ? RouteParams
+          : ExtractRouteParams<P>
+      : Record<string, never>;
 
 export interface RouterState {
     location: UrlString;
@@ -50,7 +61,7 @@ export interface NavigateOptions {
     state?: unknown;
 }
 
-export type UseRouterReturn<P extends string | undefined = undefined> = Omit<
+export type UseRouterReturn<P extends string | PathMatcher | undefined = undefined> = Omit<
     RouterState,
     'params'
 > & {

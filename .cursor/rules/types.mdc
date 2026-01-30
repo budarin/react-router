@@ -1,5 +1,5 @@
 ---
-description: Type rules — semantic aliases, avoid bare string/number
+description: Type rules — use semantic aliases instead of bare string/number
 globs: **/*.ts
 alwaysApply: false
 ---
@@ -8,20 +8,18 @@ alwaysApply: false
 
 ## Semantic aliases over bare primitives
 
-Where a string/number has clear domain meaning — use a named type alias, not bare `string` or `number`.
+Replace bare `string` and `number` with semantic type aliases where the meaning is clear: pathname → `Pathname`, URL → `UrlString`, route params → `RouteParams`, pattern → `PathPattern`, etc. Use them in parameters, variables, return types, and type assertions.
 
-**Example:**
+**Examples:**
 
 ```ts
-// ❌ Bad
-const cache = new Map<string, URL>();
-function parse(url: string): URL { ... }
+// ❌ Bad — bare string/number
+function match(pathname: string): { params: Record<string, string> } { ... }
+type Params = Record<string, string>;
 
-// ✅ Good
-type UrlString = string;
-
-const cache = new Map<UrlString, URL>();
-function parse(url: UrlString): URL { ... }
+// ✅ Good — semantic aliases (в т.ч. ключ/значение в Record)
+function match(pathname: Pathname): { params: RouteParams } { ... }
+type RouteParams = Record<RouteParamName, RouteParamValue>;
 ```
 
 **When to add an alias:** same meaning repeated in signatures, Map/Record keys, or type fields — add type in `types.ts` with short JSDoc.

@@ -66,7 +66,7 @@ function App() {
 
 ## 📖 API
 
-### `useRouter(pattern?: string)`
+### `useRouter(pattern?: string | PathMatcher)`
 
 **Возвращает:**
 
@@ -112,7 +112,9 @@ configureRouter({
 
 **Логгер:** тип `Logger` — объект с методами `trace`, `debug`, `info`, `warn`, `error` (как у `console`). Уровни: `LoggerLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error'`. Если не передан — используется `console`.
 
-**`pattern` (опционально):** строка-шаблон пути (нативный **URLPattern**). Поддерживается:
+**`pattern` (опционально):** строка-шаблон пути (нативный **URLPattern**) или функция-матчер **PathMatcher** `(pathname) => { matched, params }`. Для иерархических/кастомных маршрутов (split + проверка, RegExp с lookbehind и т.п.) передавайте функцию — хук вызовет её по текущему pathname и подставит `matched` и `params`.
+
+**Строка (URLPattern).** Поддерживается:
 
 - **Именованные параметры** — `:name` (имя как в JS: буквы, цифры, `_`). Значение сегмента попадает в `params[name]`.
 - **Опциональные группы** — `{ ... }?`: часть пути можно сделать необязательной. Один паттерн покрывает пути разной глубины; в `params` только те ключи, для которых есть сегмент в URL.
@@ -124,13 +126,17 @@ useRouter('/users/:id');
 useRouter('/elements/:elementId/*/:subElementId'); // wildcard
 
 // Опциональные группы
-useRouter('/cps/:cpId{/element/:elId}?{/defect/:defectId}?{/ppr/:pprId}?');
+useRouter('/users/:id{/posts/:postId}?');
 
 // Ограничение формата параметра (regexp)
 useRouter('/blog/:year(\\d+)/:month(\\d+)');
+
+// Функция-матчер (иерархия, кастомный разбор)
+const matchPost = (pathname: string) => ({ matched: pathname.startsWith('/posts/'), params: {} });
+useRouter(matchPost);
 ```
 
-Полный синтаксис: [URL Pattern API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API), [WHATWG URL Pattern](https://urlpattern.spec.whatwg.org/).
+Полный синтаксис URLPattern: [URL Pattern API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API), [WHATWG URL Pattern](https://urlpattern.spec.whatwg.org/).
 
 ## 🛠 Примеры
 
@@ -277,6 +283,38 @@ function MatchedExample() {
             ) : (
                 <p>Это не страница пользователя (path не совпал с /users/:id).</p>
             )}
+        </div>
+    );
+}
+```
+
+### 7. Функция-матчер (PathMatcher)
+
+Удобно, когда один URLPattern или простой regex не справляется: иерархия (например, `postId` только вместе с `userId`), кастомная валидация, разный порядок сегментов. Ниже — матчер для `/users/:userId` и `/users/:userId/posts/:postId`: два параметра, причём `postId` допустим только после литерала `posts` и только при наличии `userId`.
+
+```tsx
+import { useRouter, type PathMatcher } from '@budarin/use-router';
+
+const matchUserPosts: PathMatcher = (pathname) => {
+    const segments = pathname.split('/').filter(Boolean);
+    if (segments[0] !== 'users' || !segments[1]) return { matched: false, params: {} };
+    const params: Record<string, string> = { userId: segments[1] };
+    if (segments[2] === 'posts' && segments[3]) {
+        params.postId = segments[3];
+    }
+    return { matched: true, params };
+};
+
+function UserPostsExample() {
+    const { pathname, matched, params } = useRouter(matchUserPosts);
+
+    if (!matched) return null;
+
+    return (
+        <div>
+            <p>Путь: {pathname}</p>
+            <p>User ID: {params.userId}</p>
+            {params.postId && <p>Post ID: {params.postId}</p>}
         </div>
     );
 }

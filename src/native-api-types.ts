@@ -35,6 +35,20 @@ declare global {
 }
 
 // ===== Navigation API (NavigationHistoryEntry уже в lib.dom; ниже только то, чего нет) =====
+export interface NavigationDestination {
+    readonly url: string;
+    readonly key: string;
+    readonly id: string;
+    readonly index: number;
+    readonly sameDocument: boolean;
+}
+
+export interface NavigateEvent extends Event {
+    readonly destination: NavigationDestination;
+    readonly canIntercept: boolean;
+    intercept(options?: { handler?: () => void | Promise<void> }): void;
+}
+
 export interface NavigationNavigateOptions {
     state?: unknown;
     history?: 'auto' | 'push' | 'replace';

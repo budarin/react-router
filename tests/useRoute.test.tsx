@@ -211,7 +211,7 @@ describe('useRoute', () => {
     });
 
     describe('Навигация при отсутствии Navigation API (no-op)', () => {
-        it('при отсутствии Navigation navigate использует history.replaceState/pushState (same-document)', async () => {
+        it('при отсутствии Navigation navigate не вызывает history.replaceState/pushState (no-op)', async () => {
             const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
             const pushStateSpy = vi.spyOn(window.history, 'pushState');
 
@@ -220,34 +220,34 @@ describe('useRoute', () => {
             await act(async () => {
                 await result.current.navigate('/posts', { history: 'replace' });
             });
-            expect(replaceStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/posts');
+            expect(replaceStateSpy).not.toHaveBeenCalled();
 
             await act(async () => {
                 await result.current.navigate('/users');
             });
-            expect(pushStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/users');
+            expect(pushStateSpy).not.toHaveBeenCalled();
 
             replaceStateSpy.mockRestore();
             pushStateSpy.mockRestore();
         });
 
-        it('при отсутствии Navigation back вызывает history.back', () => {
+        it('при отсутствии Navigation back не вызывает history.back (no-op)', () => {
             const backSpy = vi.spyOn(window.history, 'back');
             const { result } = renderHook(() => useRoute());
             act(() => {
                 result.current.back();
             });
-            expect(backSpy).toHaveBeenCalled();
+            expect(backSpy).not.toHaveBeenCalled();
             backSpy.mockRestore();
         });
 
-        it('при отсутствии Navigation forward вызывает history.forward', () => {
+        it('при отсутствии Navigation forward не вызывает history.forward (no-op)', () => {
             const forwardSpy = vi.spyOn(window.history, 'forward');
             const { result } = renderHook(() => useRoute());
             act(() => {
                 result.current.forward();
             });
-            expect(forwardSpy).toHaveBeenCalled();
+            expect(forwardSpy).not.toHaveBeenCalled();
             forwardSpy.mockRestore();
         });
     });
@@ -263,7 +263,20 @@ describe('useRoute', () => {
         it('должен использовать defaultHistory из configureRouter при вызове navigate без history', async () => {
             configureRouter({ defaultHistory: 'replace' });
 
-            const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            const mockNav = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
+            (window as any).navigation = mockNav;
 
             const { result } = renderHook(() => useRoute());
 
@@ -271,9 +284,12 @@ describe('useRoute', () => {
                 await result.current.navigate('/posts');
             });
 
-            expect(replaceStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/posts');
+            expect(navigateSpy).toHaveBeenCalledWith(
+                '/posts',
+                expect.objectContaining({ history: 'replace' })
+            );
 
-            replaceStateSpy.mockRestore();
+            delete (window as any).navigation;
             configureRouter({ defaultHistory: undefined });
         });
     });
@@ -308,7 +324,19 @@ describe('useRoute', () => {
 
         it('navigate(to) добавляет base к относительному пути', async () => {
             configureRouter({ base: '/app' });
-            const pushStateSpy = vi.spyOn(window.history, 'pushState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
 
             const { result } = renderHook(() => useRoute());
 
@@ -316,14 +344,26 @@ describe('useRoute', () => {
                 await result.current.navigate('/users/1');
             });
 
-            expect(pushStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/app/users/1');
+            expect(navigateSpy).toHaveBeenCalledWith('/app/users/1', expect.any(Object));
 
-            pushStateSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('navigate(to, { base: "" }) не добавляет префикс — переход без base', async () => {
             configureRouter({ base: '/app' });
-            const pushStateSpy = vi.spyOn(window.history, 'pushState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
 
             const { result } = renderHook(() => useRoute());
 
@@ -331,14 +371,26 @@ describe('useRoute', () => {
                 await result.current.navigate('/login', { base: '' });
             });
 
-            expect(pushStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/login');
+            expect(navigateSpy).toHaveBeenCalledWith('/login', expect.any(Object));
 
-            pushStateSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('navigate(to, { base: "/auth" }) использует другой base для этого вызова', async () => {
             configureRouter({ base: '/app' });
-            const pushStateSpy = vi.spyOn(window.history, 'pushState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
 
             const { result } = renderHook(() => useRoute());
 
@@ -346,9 +398,9 @@ describe('useRoute', () => {
                 await result.current.navigate('/login', { base: '/auth' });
             });
 
-            expect(pushStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/auth/login');
+            expect(navigateSpy).toHaveBeenCalledWith('/auth/login', expect.any(Object));
 
-            pushStateSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('pathname при нахождении в корне base возвращает "/"', () => {
@@ -363,7 +415,19 @@ describe('useRoute', () => {
 
         it('replace(to, { base: "/auth" }) использует другой base для этого вызова', async () => {
             configureRouter({ base: '/app' });
-            const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
 
             const { result } = renderHook(() => useRoute());
 
@@ -371,9 +435,12 @@ describe('useRoute', () => {
                 await result.current.replace('/login', { base: '/auth' });
             });
 
-            expect(replaceStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/auth/login');
+            expect(navigateSpy).toHaveBeenCalledWith(
+                '/auth/login',
+                expect.objectContaining({ history: 'replace' })
+            );
 
-            replaceStateSpy.mockRestore();
+            delete (window as any).navigation;
         });
     });
 
@@ -395,7 +462,19 @@ describe('useRoute', () => {
         });
 
         it('useRoute({ section: "/dashboard" }) — navigate(to) adds section prefix', async () => {
-            const pushStateSpy = vi.spyOn(window.history, 'pushState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
 
             const { result } = renderHook(() => useRoute({ section: '/dashboard' }));
 
@@ -403,17 +482,25 @@ describe('useRoute', () => {
                 await result.current.navigate('/reports');
             });
 
-            expect(pushStateSpy).toHaveBeenCalledWith(
-                null,
-                '',
-                'http://localhost/dashboard/reports'
-            );
+            expect(navigateSpy).toHaveBeenCalledWith('/dashboard/reports', expect.any(Object));
 
-            pushStateSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('useRoute({ section: "/dashboard" }) — navigate(to, { base: "" }) overrides prefix', async () => {
-            const pushStateSpy = vi.spyOn(window.history, 'pushState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
 
             const { result } = renderHook(() => useRoute({ section: '/dashboard' }));
 
@@ -421,9 +508,9 @@ describe('useRoute', () => {
                 await result.current.navigate('/login', { base: '' });
             });
 
-            expect(pushStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/login');
+            expect(navigateSpy).toHaveBeenCalledWith('/login', expect.any(Object));
 
-            pushStateSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('global base + section: pathname and navigate use combined prefix', () => {
@@ -439,7 +526,19 @@ describe('useRoute', () => {
 
         it('global base + section: navigate(to) goes to globalBase + section + to', async () => {
             configureRouter({ base: '/app' });
-            const pushStateSpy = vi.spyOn(window.history, 'pushState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
 
             const { result } = renderHook(() => useRoute({ section: '/dashboard' }));
 
@@ -447,19 +546,27 @@ describe('useRoute', () => {
                 await result.current.navigate('/reports');
             });
 
-            expect(pushStateSpy).toHaveBeenCalledWith(
-                null,
-                '',
-                'http://localhost/app/dashboard/reports'
-            );
+            expect(navigateSpy).toHaveBeenCalledWith('/app/dashboard/reports', expect.any(Object));
 
-            pushStateSpy.mockRestore();
+            delete (window as any).navigation;
             configureRouter({ base: undefined });
         });
 
         it('navigate(to, { section: "" }) goes to app root (global base only)', async () => {
             configureRouter({ base: '/app' });
-            const pushStateSpy = vi.spyOn(window.history, 'pushState');
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
 
             const { result } = renderHook(() => useRoute({ section: '/dashboard' }));
 
@@ -467,9 +574,9 @@ describe('useRoute', () => {
                 await result.current.navigate('/', { section: '' });
             });
 
-            expect(pushStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/app');
+            expect(navigateSpy).toHaveBeenCalledWith('/app', expect.any(Object));
 
-            pushStateSpy.mockRestore();
+            delete (window as any).navigation;
             configureRouter({ base: undefined });
         });
     });
@@ -566,16 +673,29 @@ describe('useRoute', () => {
             consoleWarnSpy.mockRestore();
         });
 
-        it('должен принимать относительные пути (валидация, same-document через pushState)', async () => {
-            const pushStateSpy = vi.spyOn(window.history, 'pushState');
+        it('должен принимать относительные пути (валидация, same-document через Navigation API)', async () => {
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
+
             const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('/posts');
             });
-            expect(pushStateSpy).toHaveBeenCalledWith(null, '', 'http://localhost/posts');
+            expect(navigateSpy).toHaveBeenCalledWith('/posts', expect.any(Object));
 
-            pushStateSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('должен принимать http:// и https:// URL (валидация)', async () => {
@@ -704,9 +824,20 @@ describe('useRoute', () => {
 
         it('при ошибке back логирует в console.error', () => {
             const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-            const backSpy = vi.spyOn(window.history, 'back').mockImplementation(() => {
-                throw new Error('Back failed');
-            });
+
+            (window as any).navigation = {
+                navigate: vi.fn(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+                back: vi.fn().mockImplementation(() => {
+                    throw new Error('Back failed');
+                }),
+                forward: vi.fn(),
+            };
 
             const { result } = renderHook(() => useRoute());
 
@@ -717,14 +848,25 @@ describe('useRoute', () => {
             expect(consoleErrorSpy).toHaveBeenCalled();
 
             consoleErrorSpy.mockRestore();
-            backSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('при ошибке forward логирует в console.error', () => {
             const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-            const forwardSpy = vi.spyOn(window.history, 'forward').mockImplementation(() => {
-                throw new Error('Forward failed');
-            });
+
+            (window as any).navigation = {
+                navigate: vi.fn(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+                back: vi.fn(),
+                forward: vi.fn().mockImplementation(() => {
+                    throw new Error('Forward failed');
+                }),
+            };
 
             const { result } = renderHook(() => useRoute());
 
@@ -735,7 +877,7 @@ describe('useRoute', () => {
             expect(consoleErrorSpy).toHaveBeenCalled();
 
             consoleErrorSpy.mockRestore();
-            forwardSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('при ошибке go логирует в console.error', () => {
@@ -863,9 +1005,19 @@ describe('useRoute', () => {
             };
             configureRouter({ logger });
 
-            const backSpy = vi.spyOn(window.history, 'back').mockImplementation(() => {
-                throw new Error('Back failed');
-            });
+            (window as any).navigation = {
+                navigate: vi.fn(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+                back: vi.fn().mockImplementation(() => {
+                    throw new Error('Back failed');
+                }),
+                forward: vi.fn(),
+            };
 
             const { result } = renderHook(() => useRoute());
 
@@ -878,7 +1030,7 @@ describe('useRoute', () => {
                 expect.any(Error)
             );
 
-            backSpy.mockRestore();
+            delete (window as any).navigation;
         });
 
         it('без logger при невалидном URL логирует через console (дефолт)', async () => {

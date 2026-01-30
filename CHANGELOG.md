@@ -5,16 +5,15 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [Semantic Versioning](https://semver.org/lang/ru/).
 
-## [1.2.0] - 2025-01-30
+## [1.3.0] - 2025-01-30
 
 ### Изменено
 
-- Для **same-origin в браузере** навигация выполняется через **History API** (`pushState`/`replaceState`, подписка на `popstate`, `history.back()`/`forward()`) вместо Navigation API — переходы по ссылкам и кнопки «Назад»/«Вперёд» без полной перезагрузки страницы.
-- При same-origin переходах **state** сохраняется в `history.state`; при переходах через Navigation API (cross-origin и т.п.) — в `window.navigation.currentEntry.getState()`. В README описаны оба варианта.
+- **Same-document навигация:** при вызове `navigation.navigate()` для same-origin переходы больше не вызывают полную перезагрузку страницы. Добавлен перехват события `navigate` и вызов `event.intercept()` для same-origin — по спецификации Navigation API для SPA.
 
 ### Документация
 
-- README и JSDoc обновлены: разделение History API (same-origin) и Navigation API (cross-origin, `go(n)`), явное требование **Navigation API и URLPattern** (пакет работает только в поддерживающих средах), таблица браузеров, раздел «Под капотом», уточнённое описание state; сокращён повтор в блоке «Когда не использовать».
+- README обновлён: описание через Navigation API и `intercept()`, требование **Navigation API и URLPattern**, раздел «Под капотом», state через `currentEntry.getState()`.
 
 ## [1.1.1] - 2025-01-30
 

@@ -60,14 +60,16 @@ export interface NavigateOptions {
     history?: 'push' | 'replace' | 'auto';
     /** Состояние записи в истории (Navigation API): произвольные данные, связанные с этим переходом; можно прочитать из currentEntry.getState() после навигации. Передаётся в navigate и replace в одном поле options.state. */
     state?: unknown;
-    /** Базовый путь для этого вызова. undefined — из configureRouter; '' или '/' — не добавлять префикс; иначе — этот путь как префикс (переход по другому base). */
+    /** Full path prefix for this call. Overrides everything. '' or '/' = no prefix (e.g. other app). Otherwise this path is the prefix. Use for leaving app or explicit full path. */
     base?: string;
+    /** Section override for this call. '' = app root (global base only, no section). '/path' = that section under global base. Ignored if base is set. */
+    section?: string;
 }
 
-/** Опции хука useRoute: локальный базовый путь для поддерева (раздел приложения под своим подпутём). */
+/** useRoute options: section (subtree under global base). pathname without section prefix; navigate(to) adds global base + section. */
 export interface UseRouteOptions {
-    /** Базовый путь для этого хука (раздел). pathname возвращается без этого префикса; navigate(to) по умолчанию добавляет его к относительным путям. Приоритет над глобальным base из configureRouter. '' или '/' — не добавлять префикс. */
-    base?: string;
+    /** Section path under global base (e.g. '/dashboard'). pathname returned without this prefix; navigate(to) adds globalBase + section. '' = app root. Combined with configureRouter.base, not replacing it. */
+    section?: string;
 }
 
 export type UseRouteReturn<P extends string | PathMatcher | undefined = undefined> = Omit<
@@ -80,7 +82,7 @@ export type UseRouteReturn<P extends string | PathMatcher | undefined = undefine
     back: () => void;
     forward: () => void;
     go: (delta: number) => void;
-    /** То же, что navigate(to, { ...options, history: 'replace' }). Опции те же, что у navigate (state, base); history игнорируется. */
+    /** Same as navigate(to, { ...options, history: 'replace' }). Options same as navigate (state, base, section); history ignored. */
     replace: (to: string | URL, options?: NavigateOptions) => Promise<void>;
     canGoBack: (steps?: number) => boolean;
     canGoForward: (steps?: number) => boolean;

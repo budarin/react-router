@@ -50,6 +50,18 @@ function pathnameWithoutBase(pathname: Pathname, base: string | undefined): Path
     return pathname;
 }
 
+/** Combines global base and section into full prefix. section '' = app root (globalBase only). */
+function combineBases(
+    globalBase: string | undefined,
+    section: string | undefined
+): string | undefined {
+    const g = globalBase && globalBase !== '/' ? globalBase.replace(/\/$/, '') : '';
+    if (section === undefined) return g || undefined;
+    if (section === '' || section === '/') return g || undefined;
+    const s = section.startsWith('/') ? section : '/' + section;
+    return g ? g + s : s;
+}
+
 // Общий LRU-кэш URL → разобранный URL (используется в snapshot, один раз на текущий URL)
 const URL_CACHE = new Map<UrlString, URL>();
 
@@ -250,7 +262,7 @@ export function clearRouterCaches(): void {
     noNavSnapshotUrl = null;
 }
 
-/** Перегрузка: только опции (без pattern). Например useRoute({ base: '/dashboard' }). */
+/** Overload: options only (no pattern). E.g. useRoute({ section: '/dashboard' }). */
 export function useRoute(options: UseRouteOptions): UseRouteReturn;
 /** Перегрузка: pattern и опции. */
 export function useRoute<P extends string | PathMatcher>(
@@ -261,8 +273,8 @@ export function useRoute<P extends string | PathMatcher>(
 export function useRoute<P extends string | PathMatcher = string>(pattern?: P): UseRouteReturn<P>;
 /**
  * Хук состояния маршрута и навигации (Navigation API + URLPattern).
- * Вызов с одним объектом: useRoute({ base: '/dashboard' }) — опции без pattern.
- * Вызов с pattern: useRoute('/users/:id') или useRoute('/users/:id', { base: '/dashboard' }).
+ * useRoute({ section: '/dashboard' }) — options only, no pattern.
+ * useRoute('/users/:id') or useRoute('/users/:id', { section: '/dashboard' }).
  */
 export function useRoute<P extends string | PathMatcher = string>(
     patternOrOptions?: P | UseRouteOptions,
@@ -290,7 +302,7 @@ export function useRoute<P extends string | PathMatcher = string>(
         () => DEFAULT_SNAPSHOT
     );
     const keyToIndexMap = getKeyToIndexMap(rawState.entriesKeys);
-    const effectiveBase = options?.base ?? getRouterConfig().base;
+    const effectiveBase = combineBases(getRouterConfig().base, options?.section);
 
     // 2. Производное состояние роутера. pathname/searchParams берём из snapshot (разбор URL один раз в store).
     const routerState: RouterState & {
@@ -338,12 +350,15 @@ export function useRoute<P extends string | PathMatcher = string>(
     const navigate = useCallback(
         async (to: string | URL, navOptions: NavigateOptions = {}): Promise<void> => {
             let targetUrl = typeof to === 'string' ? to : to.toString();
-            const baseForCall =
-                navOptions.base !== undefined
-                    ? navOptions.base === '' || navOptions.base === '/'
-                        ? undefined
-                        : navOptions.base
-                    : effectiveBase;
+            let baseForCall: string | undefined;
+            if (navOptions.base !== undefined) {
+                baseForCall =
+                    navOptions.base === '' || navOptions.base === '/' ? undefined : navOptions.base;
+            } else if (navOptions.section !== undefined) {
+                baseForCall = combineBases(getRouterConfig().base, navOptions.section);
+            } else {
+                baseForCall = effectiveBase;
+            }
             if (
                 baseForCall &&
                 baseForCall !== '/' &&

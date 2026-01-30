@@ -94,13 +94,13 @@ function App() {
 
 - **`useRoute()`** — без pattern и опций.
 - **`useRoute(pattern)`** — только pattern (строка или PathMatcher).
-- **`useRoute(pattern, options)`** — pattern и опции (например `base`).
-- **`useRoute({ base: '/dashboard' })`** — только опции, без pattern (удобно для раздела с локальным base; не нужно передавать `undefined`).
+- **`useRoute(pattern, options)`** — pattern и опции (например `section`).
+- **`useRoute({ section: '/dashboard' })`** — только опции, без pattern (раздел под глобальным base; pathname и navigate относительно раздела).
 
 **Параметры:**
 
 - **`pattern`** (опционально) — строка-паттерн (URLPattern) или PathMatcher для парсинга `params` и `matched`.
-- **`options`** (опционально) — **`base`**: локальный базовый путь для этого поддерева (раздел приложения под своим подпутём). Тогда `pathname` возвращается без этого префикса, а `navigate(to)` по умолчанию добавляет его к относительным путям. Приоритет над глобальным `base` из `configureRouter`. Подходит, когда у приложения несколько разделов по разным подпутям (`/dashboard`, `/admin`, `/auth`): в компонентах раздела вызывайте `useRoute({ base: '/dashboard' })` и работайте с путями относительно раздела.
+- **`options`** (опционально) — **`section`**: путь раздела под глобальным base (например `/dashboard`). `pathname` возвращается без префикса (глобальный base + section), `navigate(to)` по умолчанию добавляет к путям полный префикс (base + section). Комбинируется с глобальным `base` из `configureRouter`, не заменяет его. В компонентах раздела вызывайте `useRoute({ section: '/dashboard' })` и работайте с путями относительно раздела.
 
 **Возвращает:**
 
@@ -131,13 +131,14 @@ function App() {
 {
     history?: 'push' | 'replace' | 'auto'; // по умолчанию из configureRouter или 'auto'
     state?: unknown;   // опциональные данные перехода (только подсказки для UX); подробнее — раздел про state ниже
-    base?: string;     // базовый путь для этого вызова: undefined — из конфига; '' или '/' — без префикса; иначе — другой base (напр. '/auth')
+    base?: string;     // полная подстановка префикса для этого вызова: '' или '/' — без префикса (другое приложение); иначе — полный путь (напр. '/auth')
+    section?: string;  // переопределение секции для этого вызова: '' — корень приложения (только global base); '/path' — другая секция
 }
 ```
 
 **`state`** — произвольные данные, которые вы передаёте вместе с переходом в `navigate(to, { state })` или `replace(to, { state })`. Используйте только для опциональных подсказок (скролл, откуда пришли, префилл формы): страница должна корректно работать и при заходе по прямой ссылке без state. Подробно: см. ниже «Параметр state: когда добавлять в историю».
 
-**`replace(to, options?)`** — то же, что `navigate(to, { ...options, history: 'replace' })`. Опции те же, что у **navigate** (state, base); поле **history** игнорируется (всегда замена записи).
+**`replace(to, options?)`** — то же, что `navigate(to, { ...options, history: 'replace' })`. Опции те же, что у **navigate** (state, base, section); поле **history** игнорируется (всегда замена записи).
 
 **Параметр state: когда добавлять в историю и какое состояние можно передавать**
 
@@ -431,9 +432,9 @@ function AppUnderBase() {
 }
 ```
 
-### 9. Локальный base в хуке (options.base)
+### 9. Section в хуке (options.section)
 
-Когда у приложения несколько разделов по своим подпутям (`/dashboard`, `/admin`, `/auth`), в компонентах раздела можно задать **локальный** base: вызовите `useRoute({ base: '/dashboard' })` (один объект — опции без pattern). Тогда `pathname` возвращается без префикса раздела, а `navigate(to)` по умолчанию добавляет этот base — не нужно передавать `base` в каждый вызов `navigate`.
+Когда у приложения несколько разделов по своим подпутям (`/dashboard`, `/admin`, `/auth`), в компонентах раздела задайте **section**: вызовите `useRoute({ section: '/dashboard' })`. Тогда `pathname` возвращается без префикса раздела (срезаются глобальный base и section), а `navigate(to)` по умолчанию добавляет полный префикс (base + section). Переход в корень приложения (без секции): `navigate('/', { section: '' })`. Переход «вне» приложения: `navigate('/login', { base: '' })`.
 
 ```tsx
 import { useRoute } from '@budarin/use-route';
@@ -441,8 +442,8 @@ import { useRoute } from '@budarin/use-route';
 const DASHBOARD_BASE = '/dashboard';
 
 function DashboardSection() {
-    // Локальный base для раздела: pathname и navigate относительно /dashboard
-    const { pathname, navigate } = useRoute({ base: DASHBOARD_BASE });
+    // Section для раздела: pathname и navigate относительно /dashboard (под глобальным base, если задан)
+    const { pathname, navigate } = useRoute({ section: DASHBOARD_BASE });
 
     return (
         <div>
@@ -457,8 +458,8 @@ function DashboardSection() {
                 Настройки → /dashboard/settings
             </button>
 
-            {/* Переход вне раздела: свой base в вызове */}
-            <button type="button" onClick={() => navigate('/', { base: '' })}>
+            {/* Переход в корень приложения (без секции) или на главную */}
+            <button type="button" onClick={() => navigate('/', { section: '' })}>
                 На главную
             </button>
         </div>

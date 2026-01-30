@@ -1,4 +1,4 @@
-# @budarin/use-router
+# @budarin/use-route
 
 **Минимум кода. Максимум SPA-навигации.**
 
@@ -8,10 +8,10 @@
 
 **Для иерархии URL без вложенных роутов:** в React Router, TanStack Router и аналогах иерархия пути держится на вложенности `<Route>`: дочерний сегмент не совпадает без родительского. Если структура маршрутов не иерархическая (плоская, граф, условная и т.п.), такую иерархию в URL там не реализовать. Здесь достаточно одного паттерна (одного матча) и при необходимости проверки по `params`.
 
-[![npm](https://img.shields.io/npm/v/@budarin/use-router?color=cb0000)](https://www.npmjs.com/package/@budarin/use-router)
-[![npm](https://img.shields.io/npm/dt/@budarin/use-router)](https://www.npmjs.com/package/@budarin/use-router)
-[![bundle](https://img.shields.io/bundlephobia/minzip/@budarin/use-router)](https://bundlephobia.com/result?p=@budarin/use-router)
-[![GitHub](https://img.shields.io/github/license/budarin/use-router)](https://github.com/budarin/use-router)
+[![npm](https://img.shields.io/npm/v/@budarin/use-route?color=cb0000)](https://www.npmjs.com/package/@budarin/use-route)
+[![npm](https://img.shields.io/npm/dt/@budarin/use-route)](https://www.npmjs.com/package/@budarin/use-route)
+[![bundle](https://img.shields.io/bundlephobia/minzip/@budarin/use-route)](https://bundlephobia.com/result?p=@budarin/use-route)
+[![GitHub](https://img.shields.io/github/license/budarin/use-route)](https://github.com/budarin/use-route)
 
 ## ✨ Особенности
 
@@ -30,11 +30,11 @@
 ## 🚀 Быстрый старт
 
 ```bash
-npm i @budarin/use-router
+npm i @budarin/use-route
 ```
 
 ```typescript
-import { useRouter, configureRouter } from '@budarin/use-router';
+import { useRouter, configureRouter } from '@budarin/use-route';
 
 
 function App() {
@@ -150,7 +150,7 @@ useRouter(matchPost);
 ### 1. Базовая навигация (pathname, navigate)
 
 ```tsx
-import { useRouter } from '@budarin/use-router';
+import { useRouter } from '@budarin/use-route';
 
 function BasicNavigationExample() {
     const { pathname, navigate } = useRouter();
@@ -172,7 +172,7 @@ function BasicNavigationExample() {
 ### 2. Параметры пути (useRouter('/users/:id'), params)
 
 ```tsx
-import { useRouter } from '@budarin/use-router';
+import { useRouter } from '@budarin/use-route';
 
 function ParamsExample() {
     const { params, pathname, navigate } = useRouter('/users/:id');
@@ -195,7 +195,7 @@ function ParamsExample() {
 ### 3. Search params (query)
 
 ```tsx
-import { useRouter } from '@budarin/use-router';
+import { useRouter } from '@budarin/use-route';
 
 function SearchParamsExample() {
     const { searchParams, navigate, pathname } = useRouter('/posts');
@@ -224,7 +224,7 @@ function SearchParamsExample() {
 ### 4. История (back, forward, go, canGoBack, canGoForward)
 
 ```tsx
-import { useRouter } from '@budarin/use-router';
+import { useRouter } from '@budarin/use-route';
 
 function HistoryExample() {
     const { go, back, forward, canGoBack, canGoForward } = useRouter();
@@ -251,7 +251,7 @@ function HistoryExample() {
 ### 5. Push и replace (и метод replace())
 
 ```tsx
-import { useRouter } from '@budarin/use-router';
+import { useRouter } from '@budarin/use-route';
 
 function PushReplaceExample() {
     const { navigate, replace, pathname } = useRouter();
@@ -276,7 +276,7 @@ function PushReplaceExample() {
 ### 6. matched (совпадение pathname с pattern)
 
 ```tsx
-import { useRouter } from '@budarin/use-router';
+import { useRouter } from '@budarin/use-route';
 
 function MatchedExample() {
     const { pathname, matched, params } = useRouter('/users/:id');
@@ -300,7 +300,7 @@ function MatchedExample() {
 Удобно, когда один URLPattern или простой regex не справляется: иерархия (например, `postId` только вместе с `userId`), кастомная валидация, разный порядок сегментов. Ниже — матчер для `/users/:userId` и `/users/:userId/posts/:postId`: два параметра, причём `postId` допустим только после литерала `posts` и только при наличии `userId`.
 
 ```tsx
-import { useRouter, type PathMatcher } from '@budarin/use-router';
+import { useRouter, type PathMatcher } from '@budarin/use-route';
 
 const matchUserPosts: PathMatcher = (pathname) => {
     const segments = pathname.split('/').filter(Boolean);
@@ -334,11 +334,11 @@ function UserPostsExample() {
 ## ⚙️ Установка
 
 ```bash
-npm i @budarin/use-router
+npm i @budarin/use-route
 
-pnpm add @budarin/use-router
+pnpm add @budarin/use-route
 
-yarn add @budarin/use-router
+yarn add @budarin/use-route
 ```
 
 TypeScript: типы включены.

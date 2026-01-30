@@ -37,8 +37,8 @@
         /* Пути при желании (пример) */
         "baseUrl": ".",
         "paths": {
-            "@budarin/use-router": ["src/index.ts"],
-            "@budarin/use-router/*": ["src/*"]
+            "@budarin/use-route": ["src/index.ts"],
+            "@budarin/use-route/*": ["src/*"]
         }
     },
     "include": ["src", "samples"],

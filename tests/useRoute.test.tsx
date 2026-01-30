@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import {
-    useRouter,
+    useRoute,
     clearRouterCaches,
     configureRouter,
     type PathMatcher,
@@ -9,7 +9,7 @@ import {
     type RouteParams,
 } from '../src/index';
 
-describe('useRouter', () => {
+describe('useRoute', () => {
     let originalWindow: typeof window;
 
     beforeEach(() => {
@@ -46,7 +46,7 @@ describe('useRouter', () => {
 
     describe('Базовое использование', () => {
         it('должен возвращать базовое состояние', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current).toHaveProperty('location');
             expect(result.current).toHaveProperty('pathname');
@@ -64,7 +64,7 @@ describe('useRouter', () => {
         });
 
         it('при вызове без pattern matched должен быть undefined', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
             expect(result.current.matched).toBeUndefined();
         });
 
@@ -72,7 +72,7 @@ describe('useRouter', () => {
             window.location.pathname = '/users/123';
             window.location.href = 'http://localhost/users/123';
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current.pathname).toBe('/users/123');
         });
@@ -81,7 +81,7 @@ describe('useRouter', () => {
             window.location.href = 'http://localhost/posts?page=2&sort=date';
             window.location.search = '?page=2&sort=date';
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current.searchParams.get('page')).toBe('2');
             expect(result.current.searchParams.get('sort')).toBe('date');
@@ -93,7 +93,7 @@ describe('useRouter', () => {
             window.location.pathname = '/users/123';
             window.location.href = 'http://localhost/users/123';
 
-            const { result } = renderHook(() => useRouter('/users/:id'));
+            const { result } = renderHook(() => useRoute('/users/:id'));
 
             expect(result.current.params).toEqual({ id: '123' });
         });
@@ -102,7 +102,7 @@ describe('useRouter', () => {
             window.location.pathname = '/posts/2024/my-post';
             window.location.href = 'http://localhost/posts/2024/my-post';
 
-            const { result } = renderHook(() => useRouter('/posts/:year/:slug'));
+            const { result } = renderHook(() => useRoute('/posts/:year/:slug'));
 
             expect(result.current.params).toEqual({
                 year: '2024',
@@ -114,7 +114,7 @@ describe('useRouter', () => {
             window.location.pathname = '/unknown';
             window.location.href = 'http://localhost/unknown';
 
-            const { result } = renderHook(() => useRouter('/users/:id'));
+            const { result } = renderHook(() => useRoute('/users/:id'));
 
             expect(result.current.params).toEqual({});
             expect(result.current.matched).toBe(false);
@@ -124,7 +124,7 @@ describe('useRouter', () => {
             window.location.pathname = '/elements/123/456/789';
             window.location.href = 'http://localhost/elements/123/456/789';
 
-            const { result } = renderHook(() => useRouter('/elements/:elementId/*/:subsubId'));
+            const { result } = renderHook(() => useRoute('/elements/:elementId/*/:subsubId'));
 
             expect(result.current.params).toEqual({
                 elementId: '123',
@@ -137,7 +137,7 @@ describe('useRouter', () => {
             window.location.pathname = '/cps/1592813';
             window.location.href = 'http://localhost/cps/1592813';
 
-            const { result } = renderHook(() => useRouter('/cps/:cpId{/element/:elId}?'));
+            const { result } = renderHook(() => useRoute('/cps/:cpId{/element/:elId}?'));
 
             expect(result.current.params).toEqual({ cpId: '1592813' });
             expect(result.current.matched).toBe(true);
@@ -147,7 +147,7 @@ describe('useRouter', () => {
             window.location.pathname = '/cps/1592813/element/5';
             window.location.href = 'http://localhost/cps/1592813/element/5';
 
-            const { result } = renderHook(() => useRouter('/cps/:cpId{/element/:elId}?'));
+            const { result } = renderHook(() => useRoute('/cps/:cpId{/element/:elId}?'));
 
             expect(result.current.params).toEqual({
                 cpId: '1592813',
@@ -160,7 +160,7 @@ describe('useRouter', () => {
             window.location.pathname = '/other';
             window.location.href = 'http://localhost/other';
 
-            const { result } = renderHook(() => useRouter('/cps/:cpId{/element/:elId}?'));
+            const { result } = renderHook(() => useRoute('/cps/:cpId{/element/:elId}?'));
 
             expect(result.current.params).toEqual({});
             expect(result.current.matched).toBe(false);
@@ -170,7 +170,7 @@ describe('useRouter', () => {
             window.location.pathname = '/blog/2024/02';
             window.location.href = 'http://localhost/blog/2024/02';
 
-            const { result } = renderHook(() => useRouter('/blog/:year(\\d+)/:month(\\d+)'));
+            const { result } = renderHook(() => useRoute('/blog/:year(\\d+)/:month(\\d+)'));
 
             expect(result.current.params).toEqual({
                 year: '2024',
@@ -193,7 +193,7 @@ describe('useRouter', () => {
             window.location.pathname = '/cps/123';
             window.location.href = 'http://localhost/cps/123';
 
-            const { result } = renderHook(() => useRouter(matcher));
+            const { result } = renderHook(() => useRoute(matcher));
 
             expect(result.current.matched).toBe(true);
             expect(result.current.params).toEqual({ cpId: '123' });
@@ -203,7 +203,7 @@ describe('useRouter', () => {
             window.location.pathname = '/other';
             window.location.href = 'http://localhost/other';
 
-            const { result } = renderHook(() => useRouter(matcher));
+            const { result } = renderHook(() => useRoute(matcher));
 
             expect(result.current.matched).toBe(false);
             expect(result.current.params).toEqual({});
@@ -215,7 +215,7 @@ describe('useRouter', () => {
             const replaceStateSpy = vi.spyOn(window.history, 'replaceState');
             const pushStateSpy = vi.spyOn(window.history, 'pushState');
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('/posts', { history: 'replace' });
@@ -233,7 +233,7 @@ describe('useRouter', () => {
 
         it('при отсутствии Navigation back не вызывает history.back', () => {
             const backSpy = vi.spyOn(window.history, 'back');
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
             act(() => {
                 result.current.back();
             });
@@ -243,7 +243,7 @@ describe('useRouter', () => {
 
         it('при отсутствии Navigation forward не вызывает history.forward', () => {
             const forwardSpy = vi.spyOn(window.history, 'forward');
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
             act(() => {
                 result.current.forward();
             });
@@ -254,7 +254,7 @@ describe('useRouter', () => {
 
     describe('Опции', () => {
         it('должен использовать настраиваемый лимит кэша', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current).toBeDefined();
             expect(result.current.pathname).toBeDefined();
@@ -277,7 +277,7 @@ describe('useRouter', () => {
             };
             (window as any).navigation = mockNav;
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('/posts');
@@ -299,7 +299,7 @@ describe('useRouter', () => {
             window.location.pathname = '/users/42';
             window.location.href = 'http://localhost/users/42';
 
-            const { result } = renderHook(() => useRouter('/users/:id'));
+            const { result } = renderHook(() => useRoute('/users/:id'));
 
             expect(result.current.params).toEqual({ id: '42' });
             expect(result.current.matched).toBe(true);
@@ -309,7 +309,7 @@ describe('useRouter', () => {
     describe('Валидация URL', () => {
         it('должен отклонять javascript: URL', async () => {
             const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('javascript:alert("xss")');
@@ -325,7 +325,7 @@ describe('useRouter', () => {
 
         it('должен отклонять data: URL', async () => {
             const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('data:text/html,<script>alert("xss")</script>');
@@ -338,7 +338,7 @@ describe('useRouter', () => {
 
         it('должен принимать относительные пути (валидация, без вызова history при отсутствии Navigation)', async () => {
             const pushStateSpy = vi.spyOn(window.history, 'pushState');
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('/posts');
@@ -351,7 +351,7 @@ describe('useRouter', () => {
 
         it('должен принимать http:// и https:// URL (валидация)', async () => {
             const pushStateSpy = vi.spyOn(window.history, 'pushState');
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('https://example.com/posts');
@@ -364,44 +364,44 @@ describe('useRouter', () => {
 
     describe('Валидация входных данных', () => {
         it('должен обрабатывать NaN в canGoBack', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current.canGoBack(NaN)).toBe(false);
         });
 
         it('должен обрабатывать Infinity в canGoBack', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current.canGoBack(Infinity)).toBe(false);
         });
 
         it('должен обрабатывать отрицательные значения в canGoBack', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current.canGoBack(-1)).toBe(false);
         });
 
         it('должен обрабатывать NaN в canGoForward', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current.canGoForward(NaN)).toBe(false);
         });
 
         it('должен обрабатывать Infinity в canGoForward', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current.canGoForward(Infinity)).toBe(false);
         });
 
         it('должен обрабатывать отрицательные значения в canGoForward', () => {
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             expect(result.current.canGoForward(-1)).toBe(false);
         });
 
         it('должен игнорировать NaN в go', () => {
             const goSpy = vi.spyOn(window.history, 'go');
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             act(() => {
                 result.current.go(NaN);
@@ -415,7 +415,7 @@ describe('useRouter', () => {
         it('должен игнорировать Infinity в go', () => {
             const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
             const goSpy = vi.spyOn(window.history, 'go');
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             act(() => {
                 result.current.go(Infinity);
@@ -430,7 +430,7 @@ describe('useRouter', () => {
 
         it('должен игнорировать go(0)', () => {
             const goSpy = vi.spyOn(window.history, 'go');
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             act(() => {
                 result.current.go(0);
@@ -459,7 +459,7 @@ describe('useRouter', () => {
 
             (window as any).navigation = mockNavigation;
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('/posts');
@@ -490,7 +490,7 @@ describe('useRouter', () => {
 
             (window as any).navigation = mockNavigation;
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             act(() => {
                 result.current.back();
@@ -519,7 +519,7 @@ describe('useRouter', () => {
 
             (window as any).navigation = mockNavigation;
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             act(() => {
                 result.current.forward();
@@ -548,7 +548,7 @@ describe('useRouter', () => {
 
             (window as any).navigation = mockNavigation;
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             act(() => {
                 result.current.go(1);
@@ -576,7 +576,7 @@ describe('useRouter', () => {
             };
             configureRouter({ logger });
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('javascript:alert("xss")');
@@ -599,7 +599,7 @@ describe('useRouter', () => {
             };
             configureRouter({ logger });
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             act(() => {
                 result.current.go(Infinity);
@@ -632,7 +632,7 @@ describe('useRouter', () => {
             };
             (window as any).navigation = mockNavigation;
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('/posts');
@@ -669,7 +669,7 @@ describe('useRouter', () => {
             };
             (window as any).navigation = mockNavigation;
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             act(() => {
                 result.current.back();
@@ -686,7 +686,7 @@ describe('useRouter', () => {
         it('без logger при невалидном URL логирует через console (дефолт)', async () => {
             const consoleWarnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-            const { result } = renderHook(() => useRouter());
+            const { result } = renderHook(() => useRoute());
 
             await act(async () => {
                 await result.current.navigate('javascript:void(0)');

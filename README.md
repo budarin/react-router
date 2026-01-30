@@ -24,7 +24,7 @@
 - ✅ **LRU кэш URL** с настраиваемым лимитом (по умолчанию 50)
 - ✅ **O(1) поиск** `historyIndex` через Map
 - ✅ **Только актуальные браузеры** (Navigation API + URLPattern), без fallback
-- ✅ **0 провайдеров** — просто `useRouter()`
+- ✅ **0 провайдеров** — просто `useRoute()`
 - ✅ **~1.2kB** gzipped
 
 ## 🚀 Быстрый старт
@@ -34,7 +34,7 @@ npm i @budarin/use-route
 ```
 
 ```typescript
-import { useRouter, configureRouter } from '@budarin/use-route';
+import { useRoute, configureRouter } from '@budarin/use-route';
 
 
 function App() {
@@ -45,7 +45,7 @@ function App() {
         navigate,
         go,
         canGoBack
-    } = useRouter('/users/:id'); // опционально: паттерн для парсинга params
+    } = useRoute('/users/:id'); // опционально: паттерн для парсинга params
 
     return (
         <div>
@@ -66,7 +66,7 @@ function App() {
 
 ## 📖 API
 
-### `useRouter(pattern?: string | PathMatcher)`
+### `useRoute(pattern?: string | PathMatcher)`
 
 **Возвращает:**
 
@@ -122,18 +122,18 @@ configureRouter({
 - **Regexp в параметре** — `:name(регулярка)` для ограничения формата сегмента (например только цифры). В `params` по-прежнему строка.
 
 ```typescript
-useRouter('/users/:id');
-useRouter('/elements/:elementId/*/:subElementId'); // wildcard
+useRoute('/users/:id');
+useRoute('/elements/:elementId/*/:subElementId'); // wildcard
 
 // Опциональные группы
-useRouter('/users/:id{/posts/:postId}?');
+useRoute('/users/:id{/posts/:postId}?');
 
 // Ограничение формата параметра (regexp)
-useRouter('/blog/:year(\\d+)/:month(\\d+)');
+useRoute('/blog/:year(\\d+)/:month(\\d+)');
 
 // Функция-матчер (иерархия, кастомный разбор)
 const matchPost = (pathname: string) => ({ matched: pathname.startsWith('/posts/'), params: {} });
-useRouter(matchPost);
+useRoute(matchPost);
 ```
 
 Полный синтаксис URLPattern: [URL Pattern API (MDN)](https://developer.mozilla.org/en-US/docs/Web/API/URL_Pattern_API), [WHATWG URL Pattern](https://urlpattern.spec.whatwg.org/).
@@ -150,10 +150,10 @@ useRouter(matchPost);
 ### 1. Базовая навигация (pathname, navigate)
 
 ```tsx
-import { useRouter } from '@budarin/use-route';
+import { useRoute } from '@budarin/use-route';
 
 function BasicNavigationExample() {
-    const { pathname, navigate } = useRouter();
+    const { pathname, navigate } = useRoute();
 
     return (
         <div>
@@ -169,13 +169,13 @@ function BasicNavigationExample() {
 }
 ```
 
-### 2. Параметры пути (useRouter('/users/:id'), params)
+### 2. Параметры пути (useRoute('/users/:id'), params)
 
 ```tsx
-import { useRouter } from '@budarin/use-route';
+import { useRoute } from '@budarin/use-route';
 
 function ParamsExample() {
-    const { params, pathname, navigate } = useRouter('/users/:id');
+    const { params, pathname, navigate } = useRoute('/users/:id');
 
     return (
         <div>
@@ -195,10 +195,10 @@ function ParamsExample() {
 ### 3. Search params (query)
 
 ```tsx
-import { useRouter } from '@budarin/use-route';
+import { useRoute } from '@budarin/use-route';
 
 function SearchParamsExample() {
-    const { searchParams, navigate, pathname } = useRouter('/posts');
+    const { searchParams, navigate, pathname } = useRoute('/posts');
     const pageParam = searchParams.get('page') ?? '1';
     const currentPage = Number.parseInt(pageParam, 10) || 1;
 
@@ -224,10 +224,10 @@ function SearchParamsExample() {
 ### 4. История (back, forward, go, canGoBack, canGoForward)
 
 ```tsx
-import { useRouter } from '@budarin/use-route';
+import { useRoute } from '@budarin/use-route';
 
 function HistoryExample() {
-    const { go, back, forward, canGoBack, canGoForward } = useRouter();
+    const { go, back, forward, canGoBack, canGoForward } = useRoute();
 
     return (
         <div>
@@ -251,10 +251,10 @@ function HistoryExample() {
 ### 5. Push и replace (и метод replace())
 
 ```tsx
-import { useRouter } from '@budarin/use-route';
+import { useRoute } from '@budarin/use-route';
 
 function PushReplaceExample() {
-    const { navigate, replace, pathname } = useRouter();
+    const { navigate, replace, pathname } = useRoute();
 
     return (
         <div>
@@ -276,10 +276,10 @@ function PushReplaceExample() {
 ### 6. matched (совпадение pathname с pattern)
 
 ```tsx
-import { useRouter } from '@budarin/use-route';
+import { useRoute } from '@budarin/use-route';
 
 function MatchedExample() {
-    const { pathname, matched, params } = useRouter('/users/:id');
+    const { pathname, matched, params } = useRoute('/users/:id');
 
     return (
         <div>
@@ -300,7 +300,7 @@ function MatchedExample() {
 Удобно, когда один URLPattern или простой regex не справляется: иерархия (например, `postId` только вместе с `userId`), кастомная валидация, разный порядок сегментов. Ниже — матчер для `/users/:userId` и `/users/:userId/posts/:postId`: два параметра, причём `postId` допустим только после литерала `posts` и только при наличии `userId`.
 
 ```tsx
-import { useRouter, type PathMatcher } from '@budarin/use-route';
+import { useRoute, type PathMatcher } from '@budarin/use-route';
 
 const matchUserPosts: PathMatcher = (pathname) => {
     const segments = pathname.split('/').filter(Boolean);
@@ -317,7 +317,7 @@ const matchUserPosts: PathMatcher = (pathname) => {
 };
 
 function UserPostsExample() {
-    const { pathname, matched, params } = useRouter(matchUserPosts);
+    const { pathname, matched, params } = useRoute(matchUserPosts);
 
     if (!matched) return null;
 

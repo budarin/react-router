@@ -7,7 +7,7 @@ import type {
     RouteParams,
     HistoryIndex,
     NavigateOptions,
-    UseRouterReturn,
+    UseRouteReturn,
     NavigationEntryKey,
 } from './types';
 import type { Navigation, NavigationNavigateOptions } from './native-api-types';
@@ -64,7 +64,7 @@ function getCachedParsedUrl(urlStr: UrlString): URL {
         cache.set(urlStr, parsed);
         return parsed;
     } catch (error) {
-        getLogger().warn('[useRouter] Invalid URL:', urlStr, error);
+        getLogger().warn('[useRoute] Invalid URL:', urlStr, error);
         try {
             return new URL('/', base);
         } catch {
@@ -236,9 +236,7 @@ export function clearRouterCaches(): void {
     noNavSnapshotUrl = null;
 }
 
-export function useRouter<P extends string | PathMatcher = string>(
-    pattern?: P
-): UseRouterReturn<P> {
+export function useRoute<P extends string | PathMatcher = string>(pattern?: P): UseRouteReturn<P> {
     const navigation = getNavigation();
     const rawState = useSyncExternalStore(
         subscribeToNavigation,
@@ -293,7 +291,7 @@ export function useRouter<P extends string | PathMatcher = string>(
             const targetUrl = typeof to === 'string' ? to : to.toString();
 
             if (!isValidUrl(targetUrl)) {
-                getLogger().warn('[useRouter] Invalid URL rejected:', targetUrl);
+                getLogger().warn('[useRoute] Invalid URL rejected:', targetUrl);
                 return;
             }
 
@@ -310,7 +308,7 @@ export function useRouter<P extends string | PathMatcher = string>(
             try {
                 await navigation.navigate(targetUrl, navOptions);
             } catch (error) {
-                getLogger().error('[useRouter] Navigation error:', error);
+                getLogger().error('[useRoute] Navigation error:', error);
             }
         },
         [navigation]
@@ -320,7 +318,7 @@ export function useRouter<P extends string | PathMatcher = string>(
         try {
             if (navigation) navigation.back();
         } catch (error) {
-            getLogger().error('[useRouter] Back navigation error:', error);
+            getLogger().error('[useRoute] Back navigation error:', error);
         }
     }, [navigation]);
 
@@ -328,7 +326,7 @@ export function useRouter<P extends string | PathMatcher = string>(
         try {
             if (navigation) navigation.forward();
         } catch (error) {
-            getLogger().error('[useRouter] Forward navigation error:', error);
+            getLogger().error('[useRoute] Forward navigation error:', error);
         }
     }, [navigation]);
 
@@ -370,12 +368,12 @@ export function useRouter<P extends string | PathMatcher = string>(
         (delta: number): void => {
             // Валидация входных данных
             if (delta === Infinity || delta === -Infinity) {
-                getLogger().warn('[useRouter] Delta value too large:', delta);
+                getLogger().warn('[useRoute] Delta value too large:', delta);
                 return;
             }
             if (!Number.isFinite(delta) || delta === 0) return;
             if (delta > Number.MAX_SAFE_INTEGER || delta < -Number.MAX_SAFE_INTEGER) {
-                getLogger().warn('[useRouter] Delta value too large:', delta);
+                getLogger().warn('[useRoute] Delta value too large:', delta);
                 return;
             }
 
@@ -392,7 +390,7 @@ export function useRouter<P extends string | PathMatcher = string>(
                     navigation.traverseTo(targetKey);
                 }
             } catch (error) {
-                getLogger().error('[useRouter] Go navigation error:', error);
+                getLogger().error('[useRoute] Go navigation error:', error);
             }
         },
         [navigation, routerState._entriesKeys, routerState.historyIndex]
@@ -419,7 +417,7 @@ export function useRouter<P extends string | PathMatcher = string>(
                 params: routerState.params,
                 historyIndex: routerState.historyIndex,
                 matched: routerState.matched,
-            }) as UseRouterReturn<P>,
+            }) as UseRouteReturn<P>,
         [
             navigate,
             back,

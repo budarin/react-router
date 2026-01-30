@@ -35,7 +35,7 @@ export type ExtractRouteParams<T extends string> =
           ? { [K in Param]: string }
           : Record<string, never>;
 
-/** Тип params для useRouter(pattern): литерал пути → типизированные ключи; PathMatcher → RouteParams; иначе {} */
+/** Тип params для useRoute(pattern): литерал пути → типизированные ключи; PathMatcher → RouteParams; иначе {} */
 export type ParamsForPath<P> = P extends PathMatcher
     ? RouteParams
     : [P] extends [string]
@@ -61,7 +61,7 @@ export interface NavigateOptions {
     state?: unknown;
 }
 
-export type UseRouterReturn<P extends string | PathMatcher | undefined = undefined> = Omit<
+export type UseRouteReturn<P extends string | PathMatcher | undefined = undefined> = Omit<
     RouterState,
     'params'
 > & {

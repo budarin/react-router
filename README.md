@@ -6,6 +6,8 @@
 
 **Для динамического дерева компонентов:** что рендерить определяется в рантайме по URL (`pathname`, `params`, `matched`), а не статичным деревом маршрутов (как в React Router / TanStack Router). История тоже формируется динамически: при каждом переходе можно выбрать `push` или `replace`. Подходит, когда маршруты зависят от ролей, фич, CMS или конфига с бэка.
 
+**Для иерархии URL без вложенных роутов:** в React Router, TanStack Router и аналогах иерархия пути держится на вложенности `<Route>`: дочерний сегмент не совпадает без родительского. Если структура маршрутов не иерархическая (плоская, граф, условная и т.п.), такую иерархию в URL там не реализовать. Здесь достаточно одного паттерна (одного матча) и при необходимости проверки по `params`.
+
 [![npm](https://img.shields.io/npm/v/@budarin/use-router?color=cb0000)](https://www.npmjs.com/package/@budarin/use-router)
 [![npm](https://img.shields.io/npm/dt/@budarin/use-router)](https://www.npmjs.com/package/@budarin/use-router)
 [![bundle](https://img.shields.io/bundlephobia/minzip/@budarin/use-router)](https://bundlephobia.com/result?p=@budarin/use-router)

@@ -6,10 +6,72 @@ alwaysApply: true
 
 # Main Rules
 
-1. **Propose** — what you plan to do (files, approach). **Discuss** — answer questions. **Agree** — wait for explicit consent ("да", "делай", "добавь", "ок", "согласен", "вариант 1").
-2. **Only after consent** — create or change files. **Before every file change:** did the user explicitly agree to this in this dialog? If not — do not change.
-3. **"Покажи", "пример", "как сделать"** = answer or code **in your reply only**. Do **not** edit the repository.
-4. Questions first → answer and discuss → then wait for consent before any action.
-5. Critically evaluate proposals; object with arguments if something is suboptimal; do not obey blindly.
+## Discuss and confirm before edits
 
-**Related:** for types in `.ts` — [types.mdc](.cursor/rules/types.mdc).
+1. **Propose** — what you plan to do (files, approach). **Discuss** — answer questions. **Agree** — wait for explicit consent ("да", "делай", "добавь", "ок", "согласен", "вариант 1").
+2. **Only after consent** — create or change files. **Before every file change:** did the user explicitly agree in this dialog? If not — do not change.
+3. **"Покажи", "пример", "как сделать"** = answer or code **in your reply only**. Do **not** edit the repo.
+4. Questions first → answer and discuss → wait for consent before any action.
+5. Critically evaluate; object with arguments if suboptimal; do not obey blindly.
+
+---
+
+## Execution (after consent)
+
+- [ ] Create todo list (if 3+ steps)
+- [ ] Apply changes per plan
+- [ ] **TypeScript** — `pnpm type-check` (or `npm run type-check`)
+- [ ] **Lint** — `pnpm lint` (or `npm run lint`)
+- [ ] **Tests** — `pnpm test` (or `npm test`)
+- [ ] Fix all errors
+
+## Check before done
+
+- [ ] **Docs** — check/update affected files
+- [ ] **Rules** — update if needed
+- [ ] **Tests** — propose add/update; after consent — do it
+- [ ] **Security & perf** — check (vulns, extra work, memory, complexity)
+- [ ] All above done; type-check/lint/test pass
+
+---
+
+## Forbidden
+
+- ❌ `eslint-disable`, `ts-ignore`, `ts-expect-error` without agreement
+- ❌ Skip checks (type-check, lint, tests)
+- ❌ Finish without checking docs and rules
+- ❌ Act on a question without answering first
+- ❌ Obey suboptimal requests without objecting
+
+## Principles
+
+- **Be an expert** — argue with evidence, don’t just comply
+- **Evaluate critically** — if a proposal is weak, object and suggest better
+- **Explain why** — justify decisions and objections
+- **Keep rules in sync with code** — propose rule updates when they drift
+- **Maintain tests** — propose add/update after changes
+
+## Language
+
+- **Always** use Russian in replies to the user
+- Code and technical docs may use English
+- Script/console messages — Russian
+
+## Export style
+
+- ✅ **Named exports only** (`export const foo = ...`, `export function bar() {}`)
+- ❌ **No default exports**
+
+## Examples
+
+**✅ Right:** user asks for a feature → propose options with reasons → wait for choice/consent → then implement.
+
+**❌ Wrong:** user asks for a feature → start editing code without discussion.
+
+**✅ On question:** answer, discuss, wait for consent before acting.
+
+**❌ On question:** change files without answering first.
+
+---
+
+**Related:** types in `.ts` — [types.mdc](.cursor/rules/types.mdc).

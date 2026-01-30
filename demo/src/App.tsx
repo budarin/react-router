@@ -11,7 +11,7 @@ import { BaseDemo } from './pages/BaseDemo';
 
 function Nav() {
     const { pathname, searchParams, back, forward, canGoBack, canGoForward } = useRoute();
-    const base = pathname.startsWith('/base-demo') ? '/base-demo' : '';
+    const section = pathname.startsWith('/base-demo') ? '/base-demo' : '';
     const urlPath = pathname + (searchParams.toString() ? '?' + searchParams.toString() : '');
 
     return (
@@ -33,54 +33,56 @@ function Nav() {
                 </button>
                 <span style={{ width: '0.5rem' }} />
                 <Link
-                    to={base || '/'}
-                    className={pathname === (base || '/') ? 'active' : ''}
+                    to={section || '/'}
+                    className={pathname === (section || '/') ? 'active' : ''}
                     title="Главная страница демо"
                 >
                     Главная
                 </Link>
                 <Link
-                    to={(base || '') + '/users'}
-                    className={pathname === (base || '') + '/users' ? 'active' : ''}
+                    to={(section || '') + '/users'}
+                    className={pathname === (section || '') + '/users' ? 'active' : ''}
                     title="Параметры в URL: /users/123"
                 >
                     Пользователи
                 </Link>
                 <Link
-                    to={(base || '') + '/posts'}
-                    className={pathname.startsWith((base || '') + '/posts') ? 'active' : ''}
+                    to={(section || '') + '/posts'}
+                    className={pathname.startsWith((section || '') + '/posts') ? 'active' : ''}
                     title="Параметры в строке запроса: ?page=2"
                 >
                     Посты
                 </Link>
                 <Link
-                    to={(base || '') + '/history'}
-                    className={pathname === (base || '') + '/history' ? 'active' : ''}
+                    to={(section || '') + '/history'}
+                    className={pathname === (section || '') + '/history' ? 'active' : ''}
                     title="Назад / Вперёд по истории"
                 >
                     История
                 </Link>
                 <Link
-                    to={(base || '') + '/push-replace'}
-                    className={pathname.startsWith((base || '') + '/push-replace') ? 'active' : ''}
+                    to={(section || '') + '/push-replace'}
+                    className={
+                        pathname.startsWith((section || '') + '/push-replace') ? 'active' : ''
+                    }
                     title="Добавить или заменить запись в истории"
                 >
                     Push/Replace
                 </Link>
                 <Link
-                    to={(base || '') + '/products/books/1'}
-                    className={pathname.startsWith((base || '') + '/products') ? 'active' : ''}
+                    to={(section || '') + '/products/books/1'}
+                    className={pathname.startsWith((section || '') + '/products') ? 'active' : ''}
                     title="Свой разбор пути (PathMatcher)"
                 >
                     Товары
                 </Link>
-                {!base ? (
+                {!section ? (
                     <Link
                         to="/base-demo"
                         className={pathname.startsWith('/base-demo') ? 'active' : ''}
-                        title="Раздел с префиксом в URL"
+                        title="Раздел (section) в URL"
                     >
-                        Раздел (base)
+                        Раздел (section)
                     </Link>
                 ) : (
                     <Link to="/">Выйти из раздела</Link>

@@ -8,18 +8,18 @@ export function BaseDemo() {
 
     return (
         <div className="demo-content">
-            <h1>Раздел с префиксом (локальный base)</h1>
+            <h1>Раздел (section)</h1>
             <p className="demo-lead">
                 Когда приложение живёт не в корне сайта, а в подпапке (например <code>/app/</code>),
                 можно задать <code>section: '/base-demo'</code>. Тогда внутри раздела{' '}
                 <code>pathname</code>
-                приходит без префикса, а <code>navigate('/page1')</code> ведёт на{' '}
+                приходит без пути раздела (section), а <code>navigate('/page1')</code> ведёт на{' '}
                 <code>/base-demo/page1</code>. Так удобно писать пути «относительно раздела». Ниже —
                 кнопки перехода внутри раздела и выход на главную.
             </p>
             <p>
                 Сейчас pathname внутри раздела: <code>{pathname || '/'}</code> (в полном адресе к
-                нему добавлен префикс <code>/base-demo</code>).
+                нему добавлен section <code>/base-demo</code>).
             </p>
             <h2>Действия</h2>
             <div className="demo-buttons">
@@ -37,7 +37,7 @@ export function BaseDemo() {
                     Вне приложения → /login (base: '')
                 </button>
                 <button type="button" onClick={() => navigate('/profile', { base: '/base-demo' })}>
-                    С другим base → /base-demo/profile (base: '/base-demo')
+                    С опцией base → /base-demo/profile (base: '/base-demo')
                 </button>
             </div>
         </div>

@@ -31,7 +31,7 @@ export function Home() {
                     Push и Replace — как добавлять или заменять запись в истории
                 </button>
                 <Link to="/products/books/1">Товары — свой разбор пути (PathMatcher)</Link>
-                <Link to="/base-demo">Раздел с префиксом (локальный base)</Link>
+                <Link to="/base-demo">Раздел (section)</Link>
             </div>
         </div>
     );

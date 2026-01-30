@@ -4,3 +4,4 @@ node_modules
 .pnpm-store
 .prettierrc
 pnpm-lock.yaml
+README.md

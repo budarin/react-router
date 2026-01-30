@@ -9,7 +9,7 @@
         "preview": "vite preview"
     },
     "dependencies": {
-        "@budarin/use-route": "^1.0.1",
+        "@budarin/use-route": "^1.0.2",
         "react": "^19.0.0",
         "react-dom": "^19.0.0"
     },

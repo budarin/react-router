@@ -70,7 +70,6 @@
     "prettier.configPath": ".prettierrc",
     "prettier.experimentalTernaries": true,
     "prettier.enableDebugLogs": true,
-    "prettier.prettierPath": "${workspaceFolder}/node_modules/prettier",
     "prettier.htmlWhitespaceSensitivity": "strict",
     "[json]": {
         "editor.formatOnSave": true
@@ -105,7 +104,7 @@
         "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     "[markdown]": {
-        "editor.defaultFormatter": "rvest.vs-code-prettier-eslint"
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
     },
     // workbench
     "workbench.iconTheme": "vscode-icons",

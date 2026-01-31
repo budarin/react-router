@@ -59,6 +59,7 @@ describe('useRoute', () => {
             expect(result.current).toHaveProperty('forward');
             expect(result.current).toHaveProperty('go');
             expect(result.current).toHaveProperty('replace');
+            expect(result.current).toHaveProperty('updateState');
             expect(result.current).toHaveProperty('canGoBack');
             expect(result.current).toHaveProperty('canGoForward');
         });
@@ -207,6 +208,99 @@ describe('useRoute', () => {
 
             expect(result.current.matched).toBe(false);
             expect(result.current.params).toEqual({});
+        });
+    });
+
+    describe('State (чтение, установка при навигации, updateState)', () => {
+        it('при отсутствии Navigation API state берётся из history.state', () => {
+            delete (window as any).navigation;
+            clearRouterCaches();
+            (window as any).history = {
+                ...(window as any).history,
+                state: { foo: 1 },
+            };
+
+            const { result } = renderHook(() => useRoute());
+
+            expect(result.current.state).toEqual({ foo: 1 });
+
+            (window as any).navigation = undefined;
+        });
+
+        it('navigate(to, { state }) передаёт state в navigation.navigate', async () => {
+            const navigateSpy = vi.fn().mockResolvedValue({
+                committed: Promise.resolve(),
+                finished: Promise.resolve(),
+            });
+            (window as any).navigation = {
+                navigate: navigateSpy,
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: { key: 'key0', url: 'http://localhost/' },
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
+
+            const { result } = renderHook(() => useRoute());
+
+            await act(async () => {
+                await result.current.navigate('/path', { state: { a: 1 } });
+            });
+
+            expect(navigateSpy).toHaveBeenCalledWith(
+                '/path',
+                expect.objectContaining({ state: { a: 1 } })
+            );
+
+            delete (window as any).navigation;
+        });
+
+        it('updateState(state) при наличии Navigation API вызывает updateCurrentEntry и хук возвращает новый state', () => {
+            let entryState: unknown = undefined;
+            const updateCurrentEntrySpy = vi.fn().mockImplementation((opts?: { state?: unknown }) => {
+                entryState = opts?.state;
+            });
+            (window as any).navigation = {
+                navigate: vi.fn(),
+                addEventListener: vi.fn(),
+                removeEventListener: vi.fn(),
+                currentEntry: {
+                    key: 'key0',
+                    url: 'http://localhost/',
+                    getState: () => entryState,
+                },
+                updateCurrentEntry: updateCurrentEntrySpy,
+                entries: () => [{ key: 'key0' }],
+                canGoBack: false,
+                canGoForward: false,
+            };
+
+            const { result } = renderHook(() => useRoute());
+
+            act(() => {
+                result.current.updateState({ x: 1 });
+            });
+
+            expect(updateCurrentEntrySpy).toHaveBeenCalledWith({ state: { x: 1 } });
+            expect(result.current.state).toEqual({ x: 1 });
+
+            delete (window as any).navigation;
+        });
+
+        it('updateState(state) при отсутствии Navigation API обновляет snapshot и хук возвращает новый state', () => {
+            delete (window as any).navigation;
+            clearRouterCaches();
+
+            const { result } = renderHook(() => useRoute());
+
+            act(() => {
+                result.current.updateState({ y: 2 });
+            });
+
+            expect(result.current.state).toEqual({ y: 2 });
+
+            (window as any).navigation = undefined;
         });
     });
 

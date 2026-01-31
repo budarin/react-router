@@ -106,6 +106,7 @@ type NavigationSnapshot = {
     urlStr: UrlString;
     pathname: Pathname;
     searchParams: URLSearchParams;
+    state: unknown;
 };
 
 const DEFAULT_SNAPSHOT: NavigationSnapshot = {
@@ -116,6 +117,7 @@ const DEFAULT_SNAPSHOT: NavigationSnapshot = {
     urlStr: '/',
     pathname: '/',
     searchParams: new URLSearchParams(),
+    state: undefined,
 };
 
 function getNavigation(): Navigation | undefined {
@@ -126,16 +128,22 @@ function getNavigation(): Navigation | undefined {
 
 function computeNavigationSnapshot(nav: Navigation | undefined): NavigationSnapshot {
     if (!nav) return DEFAULT_SNAPSHOT;
-    const urlStr = nav.currentEntry?.url ?? (isBrowser ? window.location.href : '/');
+    const entry = nav.currentEntry;
+    const urlStr = entry?.url ?? (isBrowser ? window.location.href : '/');
     const parsed = getCachedParsedUrl(urlStr);
+    const state =
+        entry && 'getState' in entry && typeof entry.getState === 'function'
+            ? entry.getState()
+            : undefined;
     return {
-        currentKey: nav.currentEntry?.key ?? '',
+        currentKey: entry?.key ?? '',
         canGoBackFlag: !!nav.canGoBack,
         canGoForwardFlag: !!nav.canGoForward,
         entriesKeys: nav.entries().map((e) => e.key) ?? [],
         urlStr,
         pathname: parsed.pathname,
         searchParams: parsed.searchParams,
+        state,
     };
 }
 
@@ -207,6 +215,7 @@ function getNavigationSnapshot(): NavigationSnapshot {
         urlStr,
         pathname: parsed.pathname,
         searchParams: parsed.searchParams,
+        state: isBrowser ? window.history.state : undefined,
     };
     return noNavSnapshot;
 }
@@ -346,6 +355,7 @@ export function useRoute<P extends string | PathMatcher = string>(
             searchParams,
             params,
             historyIndex,
+            state: rawState.state,
             matched,
             _entriesKeys: rawState.entriesKeys,
         };
@@ -355,6 +365,7 @@ export function useRoute<P extends string | PathMatcher = string>(
         rawState.urlStr,
         rawState.pathname,
         rawState.searchParams,
+        rawState.state,
         pattern,
         effectiveBase,
     ]);
@@ -495,6 +506,27 @@ export function useRoute<P extends string | PathMatcher = string>(
         [navigate]
     );
 
+    const updateState = useCallback(
+        (state: unknown): void => {
+            try {
+                if (navigation) {
+                    navigation.updateCurrentEntry({ state });
+                    sharedSnapshot = computeNavigationSnapshot(navigation);
+                    storeCallbacks.forEach((cb) => cb());
+                } else if (isBrowser) {
+                    window.history.replaceState(state, '', window.location.href);
+                    if (noNavSnapshot !== null) {
+                        noNavSnapshot = { ...noNavSnapshot, state };
+                    }
+                    storeCallbacks.forEach((cb) => cb());
+                }
+            } catch (error) {
+                getLogger().error('[useRoute] updateState error:', error);
+            }
+        },
+        [navigation]
+    );
+
     return useMemo(
         () =>
             ({
@@ -503,6 +535,7 @@ export function useRoute<P extends string | PathMatcher = string>(
                 forward,
                 go,
                 replace,
+                updateState,
                 canGoBack,
                 canGoForward,
                 location: routerState.location,
@@ -510,6 +543,7 @@ export function useRoute<P extends string | PathMatcher = string>(
                 searchParams: routerState.searchParams,
                 params: routerState.params,
                 historyIndex: routerState.historyIndex,
+                state: routerState.state,
                 matched: routerState.matched,
             }) as UseRouteReturn<P>,
         [
@@ -518,6 +552,7 @@ export function useRoute<P extends string | PathMatcher = string>(
             forward,
             go,
             replace,
+            updateState,
             canGoBack,
             canGoForward,
             routerState.location,
@@ -525,6 +560,7 @@ export function useRoute<P extends string | PathMatcher = string>(
             routerState.searchParams,
             routerState.params,
             routerState.historyIndex,
+            routerState.state,
             routerState.matched,
         ]
     );

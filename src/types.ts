@@ -51,6 +51,8 @@ export interface RouterState {
     searchParams: URLSearchParams;
     params: RouteParams;
     historyIndex: HistoryIndex;
+    /** State текущей записи истории (getState() / history.state). */
+    state?: unknown;
     /** true, если передан pattern и он совпал с pathname; false при несовпадении; undefined, если pattern не передан */
     matched?: boolean;
 }
@@ -84,6 +86,8 @@ export type UseRouteReturn<P extends string | PathMatcher | undefined = undefine
     go: (delta: number) => void;
     /** Same as navigate(to, { ...options, history: 'replace' }). Options same as navigate (state, base, section); history ignored. */
     replace: (to: string | URL, options?: NavigateOptions) => Promise<void>;
+    /** Обновляет state текущей записи истории без навигации (Navigation API updateCurrentEntry / history.replaceState). */
+    updateState: (state: unknown) => void;
     canGoBack: (steps?: number) => boolean;
     canGoForward: (steps?: number) => boolean;
 };

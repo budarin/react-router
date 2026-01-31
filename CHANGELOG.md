@@ -5,6 +5,13 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [1.3.2] - 2025-01-31
+
+### Добавлено
+
+- **state в возвращаемом объекте хука:** хук возвращает поле **`state`** — state текущей записи истории (из `navigation.currentEntry.getState()` при наличии Navigation API, иначе `history.state`). Установка state при навигации — через `navigate(to, { state })` и `replace(to, { state })`.
+- **`updateState(state)`:** обновление state текущей записи истории без навигации (Navigation API `updateCurrentEntry` / fallback `history.replaceState`). Подписчики получают новый state.
+
 ## [1.3.1] - 2025-01-30
 
 ### Документация

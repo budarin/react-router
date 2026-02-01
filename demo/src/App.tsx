@@ -35,7 +35,11 @@ function Nav() {
                 <span style={{ width: '0.5rem' }} />
                 <Link
                     to={section || '/'}
-                    className={pathname === (section || '/') ? 'active' : ''}
+                    className={
+                        // Вне раздела: Главная активна на pathname === '/'
+                        // В разделе: Главная не подсвечивается — активна «Выйти из раздела»
+                        !section && pathname === '/' ? 'active' : ''
+                    }
                     title="Главная страница демо"
                 >
                     Главная
@@ -93,7 +97,13 @@ function Nav() {
                         Раздел (section)
                     </Link>
                 ) : (
-                    <Link to="/">Выйти из раздела</Link>
+                    <Link
+                        to="/"
+                        className={pathname.startsWith(section) ? 'active' : ''}
+                        title="Выйти из раздела в корень приложения"
+                    >
+                        Выйти из раздела
+                    </Link>
                 )}
             </div>
         </nav>

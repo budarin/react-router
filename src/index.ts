@@ -15,7 +15,7 @@ import type {
 import type { Navigation, NavigationNavigateOptions, NavigateEvent } from './native-api-types';
 
 import { getRouterConfig, getLogger } from './types';
-import { useSyncExternalStore, useCallback, useMemo } from 'react';
+import { useSyncExternalStore, useMemo } from 'react';
 
 // Утилита для проверки браузерного окружения
 const isBrowser = typeof window !== 'undefined';
@@ -127,7 +127,21 @@ function getNavigation(): Navigation | undefined {
 }
 
 function computeNavigationSnapshot(nav: Navigation | undefined): NavigationSnapshot {
-    if (!nav) return DEFAULT_SNAPSHOT;
+    if (!nav) {
+        // SSR fallback: используем initialLocation из конфига
+        if (!isBrowser) {
+            const urlStr = getRouterConfig().initialLocation ?? '/';
+            const parsed = getCachedParsedUrl(urlStr);
+            return {
+                ...DEFAULT_SNAPSHOT,
+                urlStr,
+                pathname: parsed.pathname,
+                searchParams: parsed.searchParams,
+            };
+        }
+        // В браузере без Navigation API возвращаем дефолтный snapshot
+        return DEFAULT_SNAPSHOT;
+    }
     const entry = nav.currentEntry;
     const urlStr = entry?.url ?? (isBrowser ? window.location.href : '/');
     const parsed = getCachedParsedUrl(urlStr);
@@ -147,7 +161,8 @@ function computeNavigationSnapshot(nav: Navigation | undefined): NavigationSnaps
     };
 }
 
-let sharedSnapshot: NavigationSnapshot | null = null;
+// Инициализируем снимок сразу (всегда валидный, не null)
+let sharedSnapshot: NavigationSnapshot = computeNavigationSnapshot(getNavigation());
 const storeCallbacks = new Set<() => void>();
 let unsubscribeNavigation: (() => void) | null = null;
 
@@ -156,6 +171,9 @@ function subscribeToNavigation(callback: () => void): () => void {
     if (storeCallbacks.size === 1) {
         const nav = getNavigation();
         if (nav) {
+            // Обновляем snapshot при первой подписке
+            sharedSnapshot = computeNavigationSnapshot(nav);
+
             const interceptListener = (event: Event) => {
                 const navEvent = event as NavigateEvent;
                 if (!navEvent.canIntercept || !isBrowser) return;
@@ -188,36 +206,24 @@ function subscribeToNavigation(callback: () => void): () => void {
                 unsubscribeNavigation();
                 unsubscribeNavigation = null;
             }
-            sharedSnapshot = null;
-            noNavSnapshot = null;
-            noNavSnapshotUrl = null;
+            // ✅ Не очищаем sharedSnapshot - он остаётся валидным для глобальных методов
+            // Обновляем snapshot при следующем чтении, если нет подписчиков
         }
     };
 }
 
-let noNavSnapshot: NavigationSnapshot | null = null;
-let noNavSnapshotUrl: UrlString | null = null;
-
 function getNavigationSnapshot(): NavigationSnapshot {
-    if (sharedSnapshot !== null) return sharedSnapshot;
     const nav = getNavigation();
-    if (nav) {
-        sharedSnapshot = computeNavigationSnapshot(nav);
-        return sharedSnapshot;
+
+    // Если нет подписчиков и есть Navigation API, проверяем актуальность
+    if (storeCallbacks.size === 0 && nav) {
+        const currentUrl = nav.currentEntry?.url ?? (isBrowser ? window.location.href : '/');
+        if (currentUrl !== sharedSnapshot.urlStr) {
+            sharedSnapshot = computeNavigationSnapshot(nav);
+        }
     }
-    // Нет Navigation API (тесты, старый браузер, SSR) — URL из window.location или из конфига (initialLocation для SSR)
-    const urlStr = isBrowser ? window.location.href : (getRouterConfig().initialLocation ?? '/');
-    if (noNavSnapshot !== null && noNavSnapshotUrl === urlStr) return noNavSnapshot;
-    const parsed = getCachedParsedUrl(urlStr);
-    noNavSnapshotUrl = urlStr;
-    noNavSnapshot = {
-        ...DEFAULT_SNAPSHOT,
-        urlStr,
-        pathname: parsed.pathname,
-        searchParams: parsed.searchParams,
-        state: isBrowser ? window.history.state : undefined,
-    };
-    return noNavSnapshot;
+
+    return sharedSnapshot;
 }
 
 // Один keyToIndexMap на снимок (один на все хуки при общем rawState)
@@ -280,8 +286,222 @@ export function clearRouterCaches(): void {
     URL_CACHE.clear();
     lastEntriesKeysRef = null;
     lastKeyToIndexMap = null;
-    noNavSnapshot = null;
-    noNavSnapshotUrl = null;
+    // Пересоздаём snapshot после очистки
+    sharedSnapshot = computeNavigationSnapshot(getNavigation());
+}
+
+// ============================================================================
+// ГЛОБАЛЬНЫЕ МЕТОДЫ НАВИГАЦИИ (создаются один раз, переиспользуются всеми хуками)
+// ============================================================================
+
+// Простые глобальные методы без зависимостей
+
+/** Глобальный метод back() - создаётся один раз */
+function globalBack(): void {
+    try {
+        const nav = getNavigation();
+        if (nav) nav.back();
+    } catch (error) {
+        getLogger().error('[useRoute] Back navigation error:', error);
+    }
+}
+
+/** Глобальный метод forward() - создаётся один раз */
+function globalForward(): void {
+    try {
+        const nav = getNavigation();
+        if (nav) nav.forward();
+    } catch (error) {
+        getLogger().error('[useRoute] Forward navigation error:', error);
+    }
+}
+
+/** Глобальный метод updateState() - создаётся один раз */
+function globalUpdateState(state: unknown): void {
+    try {
+        const nav = getNavigation();
+        if (nav) {
+            nav.updateCurrentEntry({ state });
+            sharedSnapshot = computeNavigationSnapshot(nav);
+            storeCallbacks.forEach((cb) => cb());
+        } else {
+            // Без Navigation API - no-op с предупреждением
+            getLogger().warn('[useRoute] updateState requires Navigation API');
+        }
+    } catch (error) {
+        getLogger().error('[useRoute] updateState error:', error);
+    }
+}
+
+// Кэшированные методы navigate и replace по effectiveBase
+const navigateCache = new Map<
+    string,
+    (to: string | URL, options?: NavigateOptions) => Promise<void>
+>();
+
+/** Создаёт navigate для конкретного effectiveBase и кэширует */
+function getNavigateForBase(effectiveBase: string | undefined) {
+    const cacheKey = effectiveBase ?? '__root__';
+    let cachedNavigate = navigateCache.get(cacheKey);
+
+    if (!cachedNavigate) {
+        cachedNavigate = async (
+            to: string | URL,
+            navOptions: NavigateOptions = {}
+        ): Promise<void> => {
+            let targetUrl = typeof to === 'string' ? to : to.toString();
+            let baseForCall: string | undefined;
+
+            if (navOptions.base !== undefined) {
+                baseForCall =
+                    navOptions.base === '' || navOptions.base === '/' ? undefined : navOptions.base;
+            } else if (navOptions.section !== undefined) {
+                baseForCall = combineBases(getRouterConfig().base, navOptions.section);
+            } else {
+                baseForCall = effectiveBase;
+            }
+
+            if (
+                baseForCall &&
+                baseForCall !== '/' &&
+                typeof to === 'string' &&
+                to.startsWith('/') &&
+                !to.startsWith('//') &&
+                !to.includes(':')
+            ) {
+                targetUrl = baseForCall + (to === '/' ? '' : to);
+            }
+
+            if (!isValidUrl(targetUrl)) {
+                getLogger().warn('[useRoute] Invalid URL rejected:', targetUrl);
+                return;
+            }
+
+            const nav = getNavigation();
+            if (!nav) {
+                return;
+            }
+
+            const defaultHistory = getRouterConfig().defaultHistory ?? 'auto';
+            const navigationOpts: NavigationNavigateOptions = {
+                state: navOptions.state,
+                history: navOptions.history ?? defaultHistory,
+            };
+
+            try {
+                await nav.navigate(targetUrl, navigationOpts);
+            } catch (error) {
+                getLogger().error('[useRoute] Navigation error:', error);
+            }
+        };
+
+        navigateCache.set(cacheKey, cachedNavigate);
+    }
+
+    return cachedNavigate;
+}
+
+/** Создаёт replace для конкретного navigate и кэширует */
+const replaceCache = new Map<
+    string,
+    (to: string | URL, options?: NavigateOptions) => Promise<void>
+>();
+
+function getReplaceForBase(effectiveBase: string | undefined) {
+    const cacheKey = effectiveBase ?? '__root__';
+    let cachedReplace = replaceCache.get(cacheKey);
+
+    if (!cachedReplace) {
+        const navigateFn = getNavigateForBase(effectiveBase);
+        cachedReplace = (to: string | URL, options?: NavigateOptions) =>
+            navigateFn(to, { ...options, history: 'replace' });
+        replaceCache.set(cacheKey, cachedReplace);
+    }
+
+    return cachedReplace;
+}
+
+// Глобальные методы с чтением актуального snapshot
+
+/** Глобальный метод go() - читает актуальный snapshot */
+function globalGo(delta: number): void {
+    // Валидация входных данных
+    if (delta === Infinity || delta === -Infinity) {
+        getLogger().warn('[useRoute] Delta value too large:', delta);
+        return;
+    }
+    if (!Number.isFinite(delta) || delta === 0) return;
+    if (delta > Number.MAX_SAFE_INTEGER || delta < -Number.MAX_SAFE_INTEGER) {
+        getLogger().warn('[useRoute] Delta value too large:', delta);
+        return;
+    }
+
+    const nav = getNavigation();
+    if (!nav) return;
+
+    try {
+        const snapshot = getNavigationSnapshot();
+        if (snapshot.entriesKeys.length === 0) return;
+
+        const keyToIndexMap = getKeyToIndexMap(snapshot.entriesKeys);
+        const idx = keyToIndexMap.get(snapshot.currentKey) ?? -1;
+        if (idx === -1) return;
+
+        const targetIdx = idx + delta;
+        if (targetIdx < 0 || targetIdx >= snapshot.entriesKeys.length) {
+            return;
+        }
+
+        const targetKey = snapshot.entriesKeys[targetIdx];
+        if (targetKey === undefined) return;
+        nav.traverseTo(targetKey);
+    } catch (error) {
+        getLogger().error('[useRoute] Go navigation error:', error);
+    }
+}
+
+/** Глобальный метод canGoBack() - читает актуальный snapshot */
+function globalCanGoBack(steps: number = 1): boolean {
+    // Валидация входных данных
+    if (!Number.isFinite(steps) || steps < 0 || steps > Number.MAX_SAFE_INTEGER) {
+        return false;
+    }
+
+    const nav = getNavigation();
+    if (!nav) return false;
+
+    const snapshot = getNavigationSnapshot();
+    if (snapshot.entriesKeys.length === 0) {
+        return false;
+    }
+
+    const keyToIndexMap = getKeyToIndexMap(snapshot.entriesKeys);
+    const idx = keyToIndexMap.get(snapshot.currentKey) ?? -1;
+    if (idx === -1) return false;
+
+    return idx - steps >= 0;
+}
+
+/** Глобальный метод canGoForward() - читает актуальный snapshot */
+function globalCanGoForward(steps: number = 1): boolean {
+    // Валидация входных данных
+    if (!Number.isFinite(steps) || steps < 0 || steps > Number.MAX_SAFE_INTEGER) {
+        return false;
+    }
+
+    const nav = getNavigation();
+    if (!nav) return false;
+
+    const snapshot = getNavigationSnapshot();
+    if (snapshot.entriesKeys.length === 0) {
+        return false;
+    }
+
+    const keyToIndexMap = getKeyToIndexMap(snapshot.entriesKeys);
+    const idx = keyToIndexMap.get(snapshot.currentKey) ?? -1;
+    if (idx === -1) return false;
+
+    return idx + steps < snapshot.entriesKeys.length;
 }
 
 /** Overload: options only (no pattern). E.g. useRoute({ section: '/dashboard' }). */
@@ -317,7 +537,6 @@ export function useRoute<P extends string | PathMatcher = string>(
         options = optionsParam;
     }
 
-    const navigation = getNavigation();
     const rawState = useSyncExternalStore(
         subscribeToNavigation,
         getNavigationSnapshot,
@@ -326,10 +545,8 @@ export function useRoute<P extends string | PathMatcher = string>(
     const keyToIndexMap = getKeyToIndexMap(rawState.entriesKeys);
     const effectiveBase = combineBases(getRouterConfig().base, options?.section);
 
-    // 2. Производное состояние роутера. pathname/searchParams берём из snapshot (разбор URL один раз в store).
-    const routerState: RouterState & {
-        _entriesKeys: NavigationEntryKey[];
-    } = useMemo(() => {
+    // Производное состояние роутера. pathname/searchParams берём из snapshot (разбор URL один раз в store).
+    const routerState: RouterState = useMemo(() => {
         const { urlStr, pathname: rawPathname, searchParams } = rawState;
         const pathname = pathnameWithoutBase(rawPathname, effectiveBase);
 
@@ -357,7 +574,6 @@ export function useRoute<P extends string | PathMatcher = string>(
             historyIndex,
             state: rawState.state,
             matched,
-            _entriesKeys: rawState.entriesKeys,
         };
     }, [
         rawState.currentKey,
@@ -370,182 +586,32 @@ export function useRoute<P extends string | PathMatcher = string>(
         effectiveBase,
     ]);
 
-    // 3. Навигационные операции. Только Navigation API — без Navigation состояние не обновляется.
-    const navigate = useCallback(
-        async (to: string | URL, navOptions: NavigateOptions = {}): Promise<void> => {
-            let targetUrl = typeof to === 'string' ? to : to.toString();
-            let baseForCall: string | undefined;
-            if (navOptions.base !== undefined) {
-                baseForCall =
-                    navOptions.base === '' || navOptions.base === '/' ? undefined : navOptions.base;
-            } else if (navOptions.section !== undefined) {
-                baseForCall = combineBases(getRouterConfig().base, navOptions.section);
-            } else {
-                baseForCall = effectiveBase;
-            }
-            if (
-                baseForCall &&
-                baseForCall !== '/' &&
-                typeof to === 'string' &&
-                to.startsWith('/') &&
-                !to.startsWith('//') &&
-                !to.includes(':')
-            ) {
-                targetUrl = baseForCall + (to === '/' ? '' : to);
-            }
+    // ✅ Используем глобальные/кэшированные методы - стабильные ссылки, без useCallback
+    const navigate = getNavigateForBase(effectiveBase);
+    const replace = getReplaceForBase(effectiveBase);
+    const back = globalBack;
+    const forward = globalForward;
+    const go = globalGo;
+    const updateState = globalUpdateState;
+    const canGoBack = globalCanGoBack;
+    const canGoForward = globalCanGoForward;
 
-            if (!isValidUrl(targetUrl)) {
-                getLogger().warn('[useRoute] Invalid URL rejected:', targetUrl);
-                return;
-            }
-
-            if (!navigation) {
-                return;
-            }
-
-            const defaultHistory = getRouterConfig().defaultHistory ?? 'auto';
-            const navigationOpts: NavigationNavigateOptions = {
-                state: navOptions.state,
-                history: navOptions.history ?? defaultHistory,
-            };
-
-            try {
-                await navigation.navigate(targetUrl, navigationOpts);
-            } catch (error) {
-                getLogger().error('[useRoute] Navigation error:', error);
-            }
-        },
-        [navigation, effectiveBase]
-    );
-
-    const back = useCallback(() => {
-        try {
-            if (navigation) navigation.back();
-        } catch (error) {
-            getLogger().error('[useRoute] Back navigation error:', error);
-        }
-    }, [navigation]);
-
-    const forward = useCallback(() => {
-        try {
-            if (navigation) navigation.forward();
-        } catch (error) {
-            getLogger().error('[useRoute] Forward navigation error:', error);
-        }
-    }, [navigation]);
-
-    const canGoBack = useCallback(
-        (steps: number = 1): boolean => {
-            // Валидация входных данных
-            if (!Number.isFinite(steps) || steps < 0 || steps > Number.MAX_SAFE_INTEGER) {
-                return false;
-            }
-
-            if (!navigation || routerState._entriesKeys.length === 0) {
-                return false;
-            }
-            const idx = routerState.historyIndex;
-            if (idx === -1) return false;
-            return idx - steps >= 0;
-        },
-        [navigation, routerState._entriesKeys.length, routerState.historyIndex]
-    );
-
-    const canGoForward = useCallback(
-        (steps: number = 1): boolean => {
-            // Валидация входных данных
-            if (!Number.isFinite(steps) || steps < 0 || steps > Number.MAX_SAFE_INTEGER) {
-                return false;
-            }
-
-            if (!navigation || routerState._entriesKeys.length === 0) {
-                return false;
-            }
-            const idx = routerState.historyIndex;
-            if (idx === -1) return false;
-            return idx + steps < routerState._entriesKeys.length;
-        },
-        [navigation, routerState._entriesKeys.length, routerState.historyIndex]
-    );
-
-    const go = useCallback(
-        (delta: number): void => {
-            // Валидация входных данных
-            if (delta === Infinity || delta === -Infinity) {
-                getLogger().warn('[useRoute] Delta value too large:', delta);
-                return;
-            }
-            if (!Number.isFinite(delta) || delta === 0) return;
-            if (delta > Number.MAX_SAFE_INTEGER || delta < -Number.MAX_SAFE_INTEGER) {
-                getLogger().warn('[useRoute] Delta value too large:', delta);
-                return;
-            }
-
-            try {
-                if (navigation && routerState._entriesKeys.length > 0) {
-                    const idx = routerState.historyIndex;
-                    if (idx === -1) return;
-                    const targetIdx = idx + delta;
-                    if (targetIdx < 0 || targetIdx >= routerState._entriesKeys.length) {
-                        return;
-                    }
-                    const targetKey = routerState._entriesKeys[targetIdx];
-                    if (targetKey === undefined) return;
-                    navigation.traverseTo(targetKey);
-                }
-            } catch (error) {
-                getLogger().error('[useRoute] Go navigation error:', error);
-            }
-        },
-        [navigation, routerState._entriesKeys, routerState.historyIndex]
-    );
-
-    const replace = useCallback(
-        (to: string | URL, options?: NavigateOptions) =>
-            navigate(to, { ...options, history: 'replace' }),
-        [navigate]
-    );
-
-    const updateState = useCallback(
-        (state: unknown): void => {
-            try {
-                if (navigation) {
-                    navigation.updateCurrentEntry({ state });
-                    sharedSnapshot = computeNavigationSnapshot(navigation);
-                    storeCallbacks.forEach((cb) => cb());
-                } else if (isBrowser) {
-                    window.history.replaceState(state, '', window.location.href);
-                    if (noNavSnapshot !== null) {
-                        noNavSnapshot = { ...noNavSnapshot, state };
-                    }
-                    storeCallbacks.forEach((cb) => cb());
-                }
-            } catch (error) {
-                getLogger().error('[useRoute] updateState error:', error);
-            }
-        },
-        [navigation]
-    );
-
-    return useMemo(
-        () =>
-            ({
-                navigate,
-                back,
-                forward,
-                go,
-                replace,
-                updateState,
-                canGoBack,
-                canGoForward,
-                location: routerState.location,
-                pathname: routerState.pathname,
-                searchParams: routerState.searchParams,
-                params: routerState.params,
-                historyIndex: routerState.historyIndex,
-                state: routerState.state,
-                matched: routerState.matched,
-            }) as UseRouteReturn<P>,
-        [navigate, back, forward, go, replace, updateState, canGoBack, canGoForward, routerState]
-    );
+    // ✅ Возвращаем объект без useMemo - все методы стабильны, routerState мемоизирован выше
+    return {
+        navigate,
+        back,
+        forward,
+        go,
+        replace,
+        updateState,
+        canGoBack,
+        canGoForward,
+        location: routerState.location,
+        pathname: routerState.pathname,
+        searchParams: routerState.searchParams,
+        params: routerState.params,
+        historyIndex: routerState.historyIndex,
+        state: routerState.state,
+        matched: routerState.matched,
+    } as UseRouteReturn<P>;
 }

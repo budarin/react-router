@@ -28,6 +28,7 @@
         "verbatimModuleSyntax": true,
 
         /* Для пакета/библиотеки */
+        "removeComments": true,
         "declaration": true,
         "declarationMap": true,
         "sourceMap": true,

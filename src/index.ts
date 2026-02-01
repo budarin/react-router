@@ -1,7 +1,7 @@
 import type {
     Pathname,
     UrlString,
-    RouterState,
+    RouteState,
     PathPattern,
     PathMatcher,
     RouteParams,
@@ -14,7 +14,7 @@ import type {
 
 import type { Navigation, NavigationNavigateOptions, NavigateEvent } from './native-api-types';
 
-import { getRouterConfig, getLogger } from './types';
+import { getRouteConfig, getLogger } from './types';
 import { useSyncExternalStore, useMemo } from 'react';
 
 // Утилита для проверки браузерного окружения
@@ -79,7 +79,7 @@ function getCachedParsedUrl(urlStr: UrlString): URL {
     const base = isBrowser ? window.location.origin : 'http://localhost';
     try {
         const parsed = new URL(urlStr, base);
-        const limit = getRouterConfig().urlCacheLimit;
+        const limit = getRouteConfig().urlCacheLimit;
         if (cache.size >= limit) {
             const firstKey = cache.keys().next().value;
             if (firstKey !== undefined) cache.delete(firstKey);
@@ -130,7 +130,7 @@ function computeNavigationSnapshot(nav: Navigation | undefined): NavigationSnaps
     if (!nav) {
         // SSR fallback: используем initialLocation из конфига
         if (!isBrowser) {
-            const urlStr = getRouterConfig().initialLocation ?? '/';
+            const urlStr = getRouteConfig().initialLocation ?? '/';
             const parsed = getCachedParsedUrl(urlStr);
             return {
                 ...DEFAULT_SNAPSHOT,
@@ -265,9 +265,9 @@ function parseParamsFromCompiled(compiled: URLPattern, pathname: Pathname): Rout
     ) as RouteParams;
 }
 
-// Экспортируем configureRouter и очистку кэшей (для тестов / смены окружения)
+// Экспортируем configureRoute и очистку кэшей (для тестов / смены окружения)
 export {
-    configureRouter,
+    configureRoute,
     type LoggerLevel,
     type Logger,
     type NavigateOptions,
@@ -281,7 +281,7 @@ export {
 } from './types';
 
 /** Очищает кэши паттернов и URL. Для тестов или при смене base/origin. */
-export function clearRouterCaches(): void {
+export function clearRouteCaches(): void {
     PATTERN_CACHE.clear();
     URL_CACHE.clear();
     lastEntriesKeysRef = null;
@@ -356,7 +356,7 @@ function getNavigateForBase(effectiveBase: string | undefined) {
                 baseForCall =
                     navOptions.base === '' || navOptions.base === '/' ? undefined : navOptions.base;
             } else if (navOptions.section !== undefined) {
-                baseForCall = combineBases(getRouterConfig().base, navOptions.section);
+                baseForCall = combineBases(getRouteConfig().base, navOptions.section);
             } else {
                 baseForCall = effectiveBase;
             }
@@ -382,7 +382,7 @@ function getNavigateForBase(effectiveBase: string | undefined) {
                 return;
             }
 
-            const defaultHistory = getRouterConfig().defaultHistory ?? 'auto';
+            const defaultHistory = getRouteConfig().defaultHistory ?? 'auto';
             const navigationOpts: NavigationNavigateOptions = {
                 state: navOptions.state,
                 history: navOptions.history ?? defaultHistory,
@@ -543,10 +543,10 @@ export function useRoute<P extends string | PathMatcher = string>(
         () => DEFAULT_SNAPSHOT
     );
     const keyToIndexMap = getKeyToIndexMap(rawState.entriesKeys);
-    const effectiveBase = combineBases(getRouterConfig().base, options?.section);
+    const effectiveBase = combineBases(getRouteConfig().base, options?.section);
 
     // Производное состояние роутера. pathname/searchParams берём из snapshot (разбор URL один раз в store).
-    const routerState: RouterState = useMemo(() => {
+    const routeState: RouteState = useMemo(() => {
         const { urlStr, pathname: rawPathname, searchParams } = rawState;
         const pathname = pathnameWithoutBase(rawPathname, effectiveBase);
 
@@ -596,7 +596,7 @@ export function useRoute<P extends string | PathMatcher = string>(
     const canGoBack = globalCanGoBack;
     const canGoForward = globalCanGoForward;
 
-    // ✅ Возвращаем объект без useMemo - все методы стабильны, routerState мемоизирован выше
+    // ✅ Возвращаем объект без useMemo - все методы стабильны, routeState мемоизирован выше
     return {
         navigate,
         back,
@@ -606,12 +606,12 @@ export function useRoute<P extends string | PathMatcher = string>(
         updateState,
         canGoBack,
         canGoForward,
-        location: routerState.location,
-        pathname: routerState.pathname,
-        searchParams: routerState.searchParams,
-        params: routerState.params,
-        historyIndex: routerState.historyIndex,
-        state: routerState.state,
-        matched: routerState.matched,
+        location: routeState.location,
+        pathname: routeState.pathname,
+        searchParams: routeState.searchParams,
+        params: routeState.params,
+        historyIndex: routeState.historyIndex,
+        state: routeState.state,
+        matched: routeState.matched,
     } as UseRouteReturn<P>;
 }

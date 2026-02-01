@@ -110,7 +110,7 @@ function Nav() {
     );
 }
 
-function Router() {
+function RouteView() {
     const { pathname } = useRoute();
 
     if (pathname.startsWith('/base-demo')) {
@@ -158,7 +158,7 @@ export function App() {
     return (
         <>
             <Nav />
-            <Router />
+            <RouteView />
         </>
     );
 }

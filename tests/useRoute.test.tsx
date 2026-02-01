@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { renderHook, act } from '@testing-library/react';
 import {
     useRoute,
-    clearRouterCaches,
-    configureRouter,
+    clearRouteCaches,
+    configureRoute,
     type PathMatcher,
     type Pathname,
     type RouteParams,
@@ -107,7 +107,7 @@ describe('useRoute', () => {
 
         it('должен возвращать текущий pathname', () => {
             (window as any).navigation = createNavigationMock('http://localhost/users/123');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute());
 
@@ -118,7 +118,7 @@ describe('useRoute', () => {
             (window as any).navigation = createNavigationMock(
                 'http://localhost/posts?page=2&sort=date'
             );
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute());
 
@@ -130,7 +130,7 @@ describe('useRoute', () => {
     describe('Параметры из роутов (pattern)', () => {
         it('должен парсить параметры по переданному паттерну', () => {
             (window as any).navigation = createNavigationMock('http://localhost/users/123');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute('/users/:id'));
 
@@ -141,7 +141,7 @@ describe('useRoute', () => {
             (window as any).navigation = createNavigationMock(
                 'http://localhost/posts/2024/my-post'
             );
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute('/posts/:year/:slug'));
 
@@ -153,7 +153,7 @@ describe('useRoute', () => {
 
         it('должен возвращать пустой объект и matched: false, если роут не совпал', () => {
             (window as any).navigation = createNavigationMock('http://localhost/unknown');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute('/users/:id'));
 
@@ -165,7 +165,7 @@ describe('useRoute', () => {
             (window as any).navigation = createNavigationMock(
                 'http://localhost/elements/123/456/789'
             );
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute('/elements/:elementId/*/:subsubId'));
 
@@ -178,7 +178,7 @@ describe('useRoute', () => {
 
         it('опциональные группы: один паттерн, путь без опциональной части — params только по совпавшим сегментам', () => {
             (window as any).navigation = createNavigationMock('http://localhost/cps/1592813');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute('/cps/:cpId{/element/:elId}?'));
 
@@ -190,7 +190,7 @@ describe('useRoute', () => {
             (window as any).navigation = createNavigationMock(
                 'http://localhost/cps/1592813/element/5'
             );
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute('/cps/:cpId{/element/:elId}?'));
 
@@ -203,7 +203,7 @@ describe('useRoute', () => {
 
         it('опциональные группы: pathname не совпадает с паттерном — matched: false, params: {}', () => {
             (window as any).navigation = createNavigationMock('http://localhost/other');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute('/cps/:cpId{/element/:elId}?'));
 
@@ -213,7 +213,7 @@ describe('useRoute', () => {
 
         it('паттерн с regexp в параметре — совпадает и извлекает params', () => {
             (window as any).navigation = createNavigationMock('http://localhost/blog/2024/02');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute('/blog/:year(\\d+)/:month(\\d+)'));
 
@@ -236,7 +236,7 @@ describe('useRoute', () => {
 
         it('при совпадении возвращает matched: true и params из матчера', () => {
             (window as any).navigation = createNavigationMock('http://localhost/cps/123');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute(matcher));
 
@@ -258,7 +258,7 @@ describe('useRoute', () => {
     describe('State (чтение, установка при навигации, updateState)', () => {
         it('при отсутствии Navigation API state возвращает undefined (дефолтное состояние)', () => {
             delete (window as any).navigation;
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute());
 
@@ -332,7 +332,7 @@ describe('useRoute', () => {
 
         it('updateState(state) при отсутствии Navigation API - no-op с предупреждением', () => {
             delete (window as any).navigation;
-            clearRouterCaches();
+            clearRouteCaches();
             const warnSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
             const { result } = renderHook(() => useRoute());
@@ -352,7 +352,7 @@ describe('useRoute', () => {
     describe('Навигация при отсутствии Navigation API (no-op)', () => {
         beforeEach(() => {
             delete (window as any).navigation;
-            clearRouterCaches();
+            clearRouteCaches();
         });
 
         it('при отсутствии Navigation navigate не вызывает history.replaceState/pushState (no-op)', async () => {
@@ -404,8 +404,8 @@ describe('useRoute', () => {
             expect(result.current.pathname).toBeDefined();
         });
 
-        it('должен использовать defaultHistory из configureRouter при вызове navigate без history', async () => {
-            configureRouter({ defaultHistory: 'replace' });
+        it('должен использовать defaultHistory из configureRoute при вызове navigate без history', async () => {
+            configureRoute({ defaultHistory: 'replace' });
 
             const navigateSpy = vi.fn().mockResolvedValue({
                 committed: Promise.resolve(),
@@ -434,13 +434,13 @@ describe('useRoute', () => {
             );
 
             delete (window as any).navigation;
-            configureRouter({ defaultHistory: undefined });
+            configureRoute({ defaultHistory: undefined });
         });
     });
 
-    describe('clearRouterCaches', () => {
+    describe('clearRouteCaches', () => {
         it('очищает кэши; после очистки хук с pattern работает', () => {
-            clearRouterCaches();
+            clearRouteCaches();
             (window as any).navigation = createNavigationMock('http://localhost/users/42');
 
             const { result } = renderHook(() => useRoute('/users/:id'));
@@ -452,13 +452,13 @@ describe('useRoute', () => {
 
     describe('base (базовый путь)', () => {
         afterEach(() => {
-            configureRouter({ base: undefined });
+            configureRoute({ base: undefined });
         });
 
         it('pathname возвращается без base', () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             (window as any).navigation = createNavigationMock('http://localhost/app/dashboard');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute());
 
@@ -466,7 +466,7 @@ describe('useRoute', () => {
         });
 
         it('navigate(to) добавляет base к относительному пути', async () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             const navigateSpy = vi.fn().mockResolvedValue({
                 committed: Promise.resolve(),
                 finished: Promise.resolve(),
@@ -493,7 +493,7 @@ describe('useRoute', () => {
         });
 
         it('navigate(to, { base: "" }) не добавляет префикс — переход без base', async () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             const navigateSpy = vi.fn().mockResolvedValue({
                 committed: Promise.resolve(),
                 finished: Promise.resolve(),
@@ -520,7 +520,7 @@ describe('useRoute', () => {
         });
 
         it('navigate(to, { base: "/auth" }) использует другой base для этого вызова', async () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             const navigateSpy = vi.fn().mockResolvedValue({
                 committed: Promise.resolve(),
                 finished: Promise.resolve(),
@@ -547,7 +547,7 @@ describe('useRoute', () => {
         });
 
         it('pathname при нахождении в корне base возвращает "/"', () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             window.location.pathname = '/app';
             window.location.href = 'http://localhost/app';
 
@@ -557,7 +557,7 @@ describe('useRoute', () => {
         });
 
         it('replace(to, { base: "/auth" }) использует другой base для этого вызова', async () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             const navigateSpy = vi.fn().mockResolvedValue({
                 committed: Promise.resolve(),
                 finished: Promise.resolve(),
@@ -592,14 +592,14 @@ describe('useRoute', () => {
             (window as any).navigation = createNavigationMock(
                 'http://localhost/dashboard/settings'
             );
-            clearRouterCaches();
+            clearRouteCaches();
             const { result } = renderHook(() => useRoute({ section: '/dashboard' }));
             expect(result.current.pathname).toBe('/settings');
         });
 
         it('useRoute({ section: "/dashboard" }) returns pathname without section prefix', () => {
             (window as any).navigation = createNavigationMock('http://localhost/dashboard/reports');
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute({ section: '/dashboard' }));
 
@@ -659,20 +659,20 @@ describe('useRoute', () => {
         });
 
         it('global base + section: pathname and navigate use combined prefix', () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             (window as any).navigation = createNavigationMock(
                 'http://localhost/app/dashboard/settings'
             );
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute({ section: '/dashboard' }));
 
             expect(result.current.pathname).toBe('/settings');
-            configureRouter({ base: undefined });
+            configureRoute({ base: undefined });
         });
 
         it('global base + section: navigate(to) goes to globalBase + section + to', async () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             const navigateSpy = vi.fn().mockResolvedValue({
                 committed: Promise.resolve(),
                 finished: Promise.resolve(),
@@ -696,11 +696,11 @@ describe('useRoute', () => {
             expect(navigateSpy).toHaveBeenCalledWith('/app/dashboard/reports', expect.any(Object));
 
             delete (window as any).navigation;
-            configureRouter({ base: undefined });
+            configureRoute({ base: undefined });
         });
 
         it('navigate(to, { section: "" }) goes to app root (global base only)', async () => {
-            configureRouter({ base: '/app' });
+            configureRoute({ base: '/app' });
             const navigateSpy = vi.fn().mockResolvedValue({
                 committed: Promise.resolve(),
                 finished: Promise.resolve(),
@@ -724,18 +724,18 @@ describe('useRoute', () => {
             expect(navigateSpy).toHaveBeenCalledWith('/app', expect.any(Object));
 
             delete (window as any).navigation;
-            configureRouter({ base: undefined });
+            configureRoute({ base: undefined });
         });
     });
 
     describe('initialLocation (SSR) — снимок из URL при отсутствии Navigation API', () => {
         afterEach(() => {
-            configureRouter({ initialLocation: undefined });
+            configureRoute({ initialLocation: undefined });
         });
 
         it('при отсутствии Navigation API в браузере хук возвращает дефолтное состояние', () => {
             delete (window as any).navigation;
-            clearRouterCaches();
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute());
 
@@ -746,8 +746,8 @@ describe('useRoute', () => {
 
         it('на SSR с initialLocation хук использует его для снимка', () => {
             delete (window as any).navigation;
-            configureRouter({ initialLocation: 'http://example.com/posts?page=2' });
-            clearRouterCaches();
+            configureRoute({ initialLocation: 'http://example.com/posts?page=2' });
+            clearRouteCaches();
 
             const { result } = renderHook(() => useRoute());
 
@@ -756,13 +756,13 @@ describe('useRoute', () => {
             // Этот тест проверяет, что initialLocation работает в принципе
             expect(result.current.pathname).toBe('/');
 
-            configureRouter({ initialLocation: undefined });
+            configureRoute({ initialLocation: undefined });
         });
 
-        it('configureRouter({ initialLocation }) принимает значение; на SSR (нет window) хук использует его для снимка вместо window', () => {
-            configureRouter({ initialLocation: 'http://localhost/ssr-page?foo=bar' });
+        it('configureRoute({ initialLocation }) принимает значение; на SSR (нет window) хук использует его для снимка вместо window', () => {
+            configureRoute({ initialLocation: 'http://localhost/ssr-page?foo=bar' });
             // На SSR тот же код строит снимок из initialLocation; в jsdom проверяем только, что конфиг не падает
-            configureRouter({ initialLocation: undefined });
+            configureRoute({ initialLocation: undefined });
         });
     });
 
@@ -1035,10 +1035,10 @@ describe('useRoute', () => {
 
     describe('Логгер', () => {
         afterEach(() => {
-            configureRouter({ logger: undefined });
+            configureRoute({ logger: undefined });
         });
 
-        it('при переданном logger в configureRouter вызывается logger.warn при невалидном URL', async () => {
+        it('при переданном logger в configureRoute вызывается logger.warn при невалидном URL', async () => {
             const logger = {
                 trace: vi.fn(),
                 debug: vi.fn(),
@@ -1046,7 +1046,7 @@ describe('useRoute', () => {
                 warn: vi.fn(),
                 error: vi.fn(),
             };
-            configureRouter({ logger });
+            configureRoute({ logger });
 
             const { result } = renderHook(() => useRoute());
 
@@ -1069,7 +1069,7 @@ describe('useRoute', () => {
                 warn: vi.fn(),
                 error: vi.fn(),
             };
-            configureRouter({ logger });
+            configureRoute({ logger });
 
             const { result } = renderHook(() => useRoute());
 
@@ -1091,7 +1091,7 @@ describe('useRoute', () => {
                 warn: vi.fn(),
                 error: vi.fn(),
             };
-            configureRouter({ logger });
+            configureRoute({ logger });
 
             const mockNavigation = {
                 navigate: vi.fn().mockRejectedValue(new Error('Navigation failed')),
@@ -1126,7 +1126,7 @@ describe('useRoute', () => {
                 warn: vi.fn(),
                 error: vi.fn(),
             };
-            configureRouter({ logger });
+            configureRoute({ logger });
 
             (window as any).navigation = {
                 navigate: vi.fn(),

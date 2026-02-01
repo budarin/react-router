@@ -5,6 +5,26 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [1.4.0] - 2025-02-01
+
+### Изменено (Breaking)
+
+- **Переименование API:** все сущности с именем «Router» заменены на «Route» (приведение к названию пакета use-route).
+    - `configureRouter` → **`configureRoute`**
+    - `getRouterConfig` → **`getRouteConfig`** (внутренний)
+    - `clearRouterCaches` → **`clearRouteCaches`**
+    - тип `RouterState` → **`RouteState`**
+    - тип `RouterConfig` → **`RouteConfig`**
+- В демо компонент `Router` переименован в **`RouteView`**.
+
+### Миграция
+
+Замените в коде вызовы и импорты:
+
+- `configureRouter({ ... })` → `configureRoute({ ... })`
+- `clearRouterCaches()` → `clearRouteCaches()`
+- при использовании типов: `RouterState` → `RouteState`, `RouterConfig` → `RouteConfig`
+
 ## [1.3.4] - 2025-02-01
 
 ### Изменено
@@ -21,7 +41,7 @@
 
 ### Изменено
 
-- **useRoute:** в зависимостях финального `useMemo` вместо перечисления полей `routerState` (location, pathname, searchParams, params, historyIndex, state, matched) используется один объект `routerState`. Поведение не меняется: ссылка на `routerState` обновляется только при изменении этих данных.
+- **useRoute:** в зависимостях финального `useMemo` вместо перечисления полей `routeState` (location, pathname, searchParams, params, historyIndex, state, matched) используется один объект `routeState`. Поведение не меняется: ссылка на `routeState` обновляется только при изменении этих данных.
 
 ## [1.3.2] - 2025-01-31
 
@@ -50,7 +70,7 @@
 
 ### Добавлено
 
-- **section** в `UseRouteOptions`: путь подраздела под глобальным base (например `/dashboard`). `pathname` возвращается без этого префикса; `navigate(to)` добавляет глобальный base + section. Комбинируется с `configureRouter.base`, не заменяет его.
+- **section** в `UseRouteOptions`: путь подраздела под глобальным base (например `/dashboard`). `pathname` возвращается без этого префикса; `navigate(to)` добавляет глобальный base + section. Комбинируется с `configureRoute.base`, не заменяет его.
 - **section** и **base** в `NavigateOptions`: переопределение section или полного base для одного перехода (например `navigate('/', { section: '' })` — в корень приложения, `navigate('/login', { base: '' })` — путь вне приложения).
 - Демо-приложение в `demo/` (Vite + React): примеры section, base, push/replace, свой matcher.
 - CI (GitHub Actions): проверка форматирования, типов, тесты и сборка при push в `master`.
@@ -66,5 +86,5 @@
 
 - Первый релиз.
 - Хук `useRoute(options?)`: `pathname`, `searchParams`, `navigate`, `replace`, `back`, `forward`, `canGoBack`, `canGoForward`, `state`, опционально `pattern` и параметры URL.
-- `configureRouter(options)`: глобальные `base`, `logger`, `initialLocation` (SSR).
+- `configureRoute(options)`: глобальные `base`, `logger`, `initialLocation` (SSR).
 - Интеграция с Navigation API; запасной вариант для старых окружений.

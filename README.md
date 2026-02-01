@@ -57,7 +57,7 @@ npm i @budarin/use-route
 ```
 
 ```typescript
-import { useRoute, configureRouter } from '@budarin/use-route';
+import { useRoute, configureRoute } from '@budarin/use-route';
 
 
 function App() {
@@ -103,7 +103,7 @@ function App() {
 - **`pattern`** (опционально) — строка-паттерн (URLPattern) или PathMatcher для парсинга `params` и `matched`.
 - **`options`** (опционально)
 
-    **`section`**: путь раздела под глобальным base (например `/dashboard`). `navigate(to)` по умолчанию добавляет к путям полный префикс (base + section). Комбинируется с глобальным `base` из `configureRouter`, не заменяет его. В компонентах раздела вызывайте `useRoute({ section: '/dashboard' })` и работайте с путями относительно раздела.
+    **`section`**: путь раздела под глобальным base (например `/dashboard`). `navigate(to)` по умолчанию добавляет к путям полный префикс (base + section). Комбинируется с глобальным `base` из `configureRoute`, не заменяет его. В компонентах раздела вызывайте `useRoute({ section: '/dashboard' })` и работайте с путями относительно раздела.
 
 **Возвращает:**
 
@@ -134,7 +134,7 @@ function App() {
 
 ```typescript
 {
-    history?: 'push' | 'replace' | 'auto'; // по умолчанию из configureRouter или 'auto'
+    history?: 'push' | 'replace' | 'auto'; // по умолчанию из configureRoute или 'auto'
     state?: unknown;   // опциональные данные перехода (только подсказки для UX); подробнее — раздел про state ниже
     base?: string;     // полная подстановка префикса для этого вызова: '' или '/' — без префикса (другое приложение); иначе — полный путь (напр. '/auth')
     section?: string;  // переопределение секции для этого вызова: '' — корень приложения (только global base); '/path' — другая секция
@@ -172,10 +172,10 @@ function App() {
 
 **Итог.** State в истории — опциональный инструмент для «передать что-то вместе с переходом», когда это улучшение, а не требование. Если сомневаетесь — можно не использовать; в большинстве приложений достаточно pathname, query и запросов к API.
 
-**`configureRouter(config)`** — глобальная настройка один раз при старте приложения:
+**`configureRoute(config)`** — глобальная настройка один раз при старте приложения:
 
 ```typescript
-configureRouter({
+configureRoute({
     urlCacheLimit: 50, // лимит LRU-кэша URL (по умолчанию 50)
     defaultHistory: 'replace', // history по умолчанию для всех navigate()
     logger: myLogger, // логгер (дефолт: console)
@@ -442,8 +442,8 @@ function UserPostsExample() {
 Когда приложение располагается **не в корне домена**, а по подпути (например `https://example.com/app/` — все маршруты под `/app`), задайте в конфиге `base: '/app'`. Тогда `navigate(to)` добавляет base к относительным путям. Для одноразового перехода «вне» этого пути (например на `/login`) используйте опцию `base` в `navigate` или `replace`: `navigate('/login', { base: '' })`.
 
 ```tsx
-import { useRoute, configureRouter } from '@budarin/use-route';
-configureRouter({ base: '/app' });
+import { useRoute, configureRoute } from '@budarin/use-route';
+configureRoute({ base: '/app' });
 
 function AppUnderBase() {
     const { pathname, navigate } = useRoute();
@@ -511,13 +511,13 @@ function DashboardSection() {
 
 ```tsx
 // Серверный обработчик (псевдокод: Express, Fastify, Next и т.д.)
-import { configureRouter } from '@budarin/use-route';
+import { configureRoute } from '@budarin/use-route';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { App } from './App';
 
 function handleRequest(req, res) {
     // Один раз перед рендером этого запроса
-    configureRouter({ initialLocation: req.url });
+    configureRoute({ initialLocation: req.url });
 
     const html = renderToStaticMarkup(<App />);
     res.send(html);
@@ -623,7 +623,7 @@ import 'urlpattern-polyfill';
 - LRU кэш parsed URL (настраиваемый лимит)
 - Map для O(1) поиска `historyIndex`
 - URLPattern для `:params`
-- Кэш compiled patterns; `clearRouterCaches()` — очистка кэшей (тесты, смена окружения)
+- Кэш compiled patterns; `clearRouteCaches()` — очистка кэшей (тесты, смена окружения)
 - SSR-safe (checks `typeof window`)
 
 ## 🤝 Лицензия

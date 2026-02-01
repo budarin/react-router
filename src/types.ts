@@ -44,7 +44,7 @@ export type ParamsForPath<P> = P extends PathMatcher
           : ExtractRouteParams<P>
       : Record<string, never>;
 
-export interface RouterState {
+export interface RouteState {
     location: UrlString;
     pathname: Pathname;
     /** Только чтение. Мутировать не следует — не меняет реальный URL. */
@@ -70,12 +70,12 @@ export interface NavigateOptions {
 
 /** useRoute options: section (subtree under global base). pathname without section prefix; navigate(to) adds global base + section. */
 export interface UseRouteOptions {
-    /** Section path under global base (e.g. '/dashboard'). pathname returned without this prefix; navigate(to) adds globalBase + section. '' = app root. Combined with configureRouter.base, not replacing it. */
+    /** Section path under global base (e.g. '/dashboard'). pathname returned without this prefix; navigate(to) adds globalBase + section. '' = app root. Combined with configureRoute.base, not replacing it. */
     section?: string;
 }
 
 export type UseRouteReturn<P extends string | PathMatcher | undefined = undefined> = Omit<
-    RouterState,
+    RouteState,
     'params'
 > & {
     params: ParamsForPath<P>;
@@ -92,7 +92,7 @@ export type UseRouteReturn<P extends string | PathMatcher | undefined = undefine
     canGoForward: (steps?: number) => boolean;
 };
 
-// Логгер для роутера
+// Логгер для маршрутизации
 export type LoggerLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error';
 
 export interface Logger {
@@ -103,8 +103,8 @@ export interface Logger {
     error(...args: unknown[]): void;
 }
 
-// Глобальная конфигурация роутера
-export interface RouterConfig {
+// Глобальная конфигурация маршрутизации
+export interface RouteConfig {
     /** Максимальное количество URL в кэше (по умолчанию: 50) */
     urlCacheLimit: number;
     /** Значение history по умолчанию для всех вызовов navigate() (по умолчанию: 'auto') */
@@ -118,28 +118,28 @@ export interface RouterConfig {
 }
 
 // Внутренняя конфигурация (не экспортируется)
-let routerConfig: RouterConfig = {
+let routeConfig: RouteConfig = {
     urlCacheLimit: 50,
 };
 
 /**
- * Настройка глобальной конфигурации роутера
+ * Настройка глобальной конфигурации маршрутизации
  * Вызывается один раз при инициализации приложения
  */
-export function configureRouter(config: Partial<RouterConfig>): void {
-    routerConfig = { ...routerConfig, ...config };
+export function configureRoute(config: Partial<RouteConfig>): void {
+    routeConfig = { ...routeConfig, ...config };
 }
 
 /**
  * Получить текущую конфигурацию (для внутреннего использования)
  */
-export function getRouterConfig(): RouterConfig {
-    return routerConfig;
+export function getRouteConfig(): RouteConfig {
+    return routeConfig;
 }
 
 /**
  * Получить логгер (config.logger ?? console)
  */
 export function getLogger(): Logger {
-    return routerConfig.logger ?? console;
+    return routeConfig.logger ?? console;
 }

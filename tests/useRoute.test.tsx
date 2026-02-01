@@ -744,24 +744,20 @@ describe('useRoute', () => {
             expect(result.current.location).toBe('/');
         });
 
-        it('на SSR с initialLocation хук использует его для снимка', () => {
+        it('configureRoute({ initialLocation }) принимает значение; в jsdom (есть window) initialLocation не применяется — хук возвращает DEFAULT_SNAPSHOT', () => {
             delete (window as any).navigation;
             configureRoute({ initialLocation: 'http://example.com/posts?page=2' });
             clearRouteCaches();
 
             const { result } = renderHook(() => useRoute());
 
-            // Без Navigation API но с initialLocation хук использует initialLocation только на SSR
-            // В браузере (даже без Navigation API) хук возвращает DEFAULT_SNAPSHOT
-            // Этот тест проверяет, что initialLocation работает в принципе
+            // В тестах есть window (jsdom), поэтому initialLocation используется только при !isBrowser (реальный SSR).
+            // Здесь проверяем: конфиг не падает, без nav возвращается дефолтный снимок (pathname '/').
             expect(result.current.pathname).toBe('/');
-
-            configureRoute({ initialLocation: undefined });
         });
 
-        it('configureRoute({ initialLocation }) принимает значение; на SSR (нет window) хук использует его для снимка вместо window', () => {
+        it('configureRoute({ initialLocation }) не падает при задании и сбросе', () => {
             configureRoute({ initialLocation: 'http://localhost/ssr-page?foo=bar' });
-            // На SSR тот же код строит снимок из initialLocation; в jsdom проверяем только, что конфиг не падает
             configureRoute({ initialLocation: undefined });
         });
     });

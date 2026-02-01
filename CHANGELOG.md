@@ -5,6 +5,22 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [1.4.1] - 2025-02-01
+
+### Добавлено
+
+- **ESLint** (flat config) в проекте: `eslint`, `@eslint/js`, `typescript-eslint`, `globals`. Скрипт `lint` запускает `eslint .` и `prettier --check .`.
+
+### Документация
+
+- **README:** явно указано, что `configureRoute` предназначен для однократного вызова при старте приложения; повторная смена конфига в рантайме не поддерживается (внутренние кэши и состояние не сбрасываются).
+
+### Изменено
+
+- **package.json:** заполнен `description` для npm.
+- **tsconfig.json:** в `include` оставлен только `src` (убран несуществующий `samples`).
+- **Тесты:** уточнён тест initialLocation (SSR) — в jsdom есть `window`, поэтому `initialLocation` не применяется; проверяется приём конфига и дефолтный снимок.
+
 ## [1.4.0] - 2025-02-01
 
 ### Изменено (Breaking)

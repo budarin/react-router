@@ -8,7 +8,6 @@
 
 // ===== URLPattern (пока нет в lib.dom) =====
 declare global {
-    // eslint-disable-next-line @typescript-eslint/no-redeclare
     class URLPattern {
         constructor(init?: URLPatternInit);
         test(input: URLPatternInit | string): boolean;

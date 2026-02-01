@@ -43,6 +43,6 @@
             "@budarin/use-route/*": ["src/*"]
         }
     },
-    "include": ["src", "samples"],
+    "include": ["src"],
     "exclude": ["dist", "node_modules"]
 }

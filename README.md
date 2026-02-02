@@ -406,11 +406,9 @@ import { useRoute, type PathMatcher } from '@budarin/use-route';
 
 const matchUserPosts: PathMatcher = (pathname) => {
     const segments = pathname.split('/').filter(Boolean);
-
     if (segments[0] !== 'users' || !segments[1]) return { matched: false, params: {} };
 
     const params: Record<string, string> = { userId: segments[1] };
-
     if (segments[2] === 'posts' && segments[3]) {
         params.postId = segments[3];
     }

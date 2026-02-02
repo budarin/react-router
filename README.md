@@ -85,7 +85,7 @@ function App() {
 
 ## 📖 API
 
-### `useRoute(pattern?: string | PathMatcher, options?: UseRouteOptions)` / `useRoute(options: UseRouteOptions)`
+### `useRoute(pattern?: string | PathMatcher, options?: UseRouteOptions)`<br />`useRoute(options: UseRouteOptions)`
 
 **Формы вызова:**
 

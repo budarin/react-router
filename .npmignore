@@ -19,3 +19,4 @@ pnpm-workspace.yaml
 
 # Репозиторий (CI и т.п.)
 .github/
+demo

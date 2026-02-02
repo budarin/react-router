@@ -5,6 +5,12 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [Semantic Versioning](https://semver.org/lang/ru/).
 
+## [1.4.9] - 2026-02-02
+
+### Добавлено
+
+**Папка demo** исключена из дистрибутива пакета
+
 ## [1.4.8] - 2026-02-02
 
 - **README:** уточнена минимальная версия React.

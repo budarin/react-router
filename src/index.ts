@@ -575,16 +575,7 @@ export function useRoute<P extends string | PathMatcher = string>(
             state: rawState.state,
             matched,
         };
-    }, [
-        rawState.currentKey,
-        rawState.entriesKeys,
-        rawState.urlStr,
-        rawState.pathname,
-        rawState.searchParams,
-        rawState.state,
-        pattern,
-        effectiveBase,
-    ]);
+    }, [rawState, pattern, effectiveBase]);
 
     // ✅ Используем глобальные/кэшированные методы - стабильные ссылки, без useCallback
     const navigate = getNavigateForBase(effectiveBase);

@@ -1,6 +1,6 @@
 {
     "name": "@budarin/use-route",
-    "version": "1.4.10",
+    "version": "1.4.11",
     "description": "Infrastructure React hook for SPA routing. Navigation API + URLPattern. No providers, no context.",
     "main": "dist/index.js",
     "types": "dist/index.d.ts",

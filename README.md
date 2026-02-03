@@ -16,7 +16,7 @@
 [![bundle](https://img.shields.io/bundlephobia/minzip/@budarin/use-route)](https://bundlephobia.com/result?p=@budarin/use-route)
 [![GitHub](https://img.shields.io/github/license/budarin/use-route)](https://github.com/budarin/use-route)
 
-**[▶  &nbsp;Demo StackBlitz](https://stackblitz.com/github/budarin/use-route/tree/master/demo)**
+**[▶  &nbsp;Demo StackBlitz](https://stackblitz.com/github/budarin/use-route/tree/master/demo)**&nbsp;&nbsp;
 **[▶  &nbsp;Demo CodeSandbox](https://codesandbox.io/p/sandbox/github/budarin/use-route/tree/master/demo)**
 
 

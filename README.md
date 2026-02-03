@@ -29,13 +29,13 @@
 - ✅ **Navigation API** — `navigation.navigate()`, `back()`, `forward()`, `traverseTo()`
 - ✅ **URLPattern** - для нативного парсинга параметров шаблона роута
 - ✅ **PathMatcher** - для кастомного парсинга при получении и проверке параметров роута
-- ✅ **useSyncExternalStore** — concurrent-safe, SSR-ready
+- ✅ **useSyncExternalStore** — concurrent render safety, SSR-ready
 - ✅ **canGoBack(n), canGoForward(n)** — точная проверка при переходах
 - ✅ **O(1) поиск** при получении `historyIndex` роута
 - ✅ **state** — чтение state текущей записи истории, установка при навигации, обновление состояния
 - ✅ **LRU кэш URL** - кэш роутов с настраиваемым лимитом (по умолчанию 50)
-- ✅ **0 провайдеров** — нет необходимости - просто `useRoute()`
-- ✅ **~4 kB** gzipped (исходный код; с минификацией в бандле меньше)
+- ✅ **0 провайдеров** — просто `useRoute()`!
+- ✅ **~4 kB** gzipped
 
 ## ⚠️ Когда не использовать
 

@@ -5,7 +5,7 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 версионирование — [Semantic Versioning](https://semver.org/lang/ru/).
 
-## [1.4.16] - 2026-02-03
+## [1.4.17] - 2026-02-03
 
 - **README:** правки текста.
 

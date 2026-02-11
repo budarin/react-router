@@ -68,10 +68,18 @@ export interface NavigateOptions {
     section?: string | null | false;
 }
 
+/** Options passed to the URLPattern constructor when pattern is a string. Only used for pathname matching. */
+export interface PatternOptions {
+    /** When true, pathname matching is case-insensitive (URLPattern ignoreCase). */
+    ignoreCase?: boolean;
+}
+
 /** useRoute options: section (subtree under global base). pathname without section prefix; navigate(to) adds global base + section. */
 export interface UseRouteOptions {
     /** Section path under global base (e.g. '/dashboard'). pathname returned without this prefix; navigate(to) adds globalBase + section. '' = app root. Combined with configureRoute.base, not replacing it. */
     section?: string;
+    /** Options for URLPattern when pattern is a string (e.g. ignoreCase). Ignored when pattern is a PathMatcher. */
+    patternOptions?: PatternOptions;
 }
 
 export type UseRouteReturn<P extends string | PathMatcher | undefined = undefined> = Omit<

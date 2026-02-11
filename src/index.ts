@@ -10,6 +10,7 @@ import type {
     UseRouteOptions,
     NavigateOptions,
     NavigationEntryKey,
+    PatternOptions,
 } from './types';
 
 import type { Navigation, NavigationNavigateOptions, NavigateEvent } from './native-api-types';
@@ -243,14 +244,23 @@ function getKeyToIndexMap(
     return map;
 }
 
-// Кэш скомпилированных URLPattern
-const PATTERN_CACHE = new Map<PathPattern, URLPattern>();
+// Кэш скомпилированных URLPattern (ключ: pattern + опции, чтобы ignoreCase и т.д. давали разный экземпляр)
+const PATTERN_CACHE = new Map<string, URLPattern>();
 
-function getCompiledPattern(pattern: PathPattern): URLPattern {
-    let compiled = PATTERN_CACHE.get(pattern);
+function patternCacheKey(pattern: PathPattern, patternOptions?: PatternOptions): string {
+    const opts = patternOptions?.ignoreCase ? 'i' : '';
+    return opts ? `${pattern}\0${opts}` : pattern;
+}
+
+function getCompiledPattern(pattern: PathPattern, patternOptions?: PatternOptions): URLPattern {
+    const key = patternCacheKey(pattern, patternOptions);
+    let compiled = PATTERN_CACHE.get(key);
     if (!compiled) {
-        compiled = new URLPattern({ pathname: pattern });
-        PATTERN_CACHE.set(pattern, compiled);
+        const opts = patternOptions?.ignoreCase ? { ignoreCase: true } : undefined;
+        compiled = opts
+            ? new URLPattern({ pathname: pattern }, opts)
+            : new URLPattern({ pathname: pattern });
+        PATTERN_CACHE.set(key, compiled);
     }
     return compiled;
 }
@@ -277,6 +287,7 @@ export {
     type ParamsForPath,
     type PathMatcher,
     type Pathname,
+    type PatternOptions,
     type RouteParams,
 } from './types';
 
@@ -562,7 +573,7 @@ export function useRoute<P extends string | PathMatcher = string>(
                 matched = result.matched;
                 params = result.params;
             } else {
-                const compiled = getCompiledPattern(pattern);
+                const compiled = getCompiledPattern(pattern, options?.patternOptions);
                 const patternMatched = testPattern(compiled, pathname);
                 matched = patternMatched;
                 params = patternMatched ? parseParamsFromCompiled(compiled, pathname) : {};
@@ -579,7 +590,7 @@ export function useRoute<P extends string | PathMatcher = string>(
             state: rawState.state,
             matched,
         };
-    }, [rawState, pattern, effectiveBase]);
+    }, [rawState, pattern, effectiveBase, options?.patternOptions]);
 
     // ✅ Используем глобальные/кэшированные методы - стабильные ссылки, без useCallback
     const navigate = getNavigateForBase(effectiveBase);

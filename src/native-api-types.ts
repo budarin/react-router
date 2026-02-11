@@ -8,8 +8,12 @@
 
 // ===== URLPattern (пока нет в lib.dom) =====
 declare global {
+    interface URLPatternOptions {
+        ignoreCase?: boolean;
+    }
+
     class URLPattern {
-        constructor(init?: URLPatternInit);
+        constructor(init?: URLPatternInit, options?: URLPatternOptions);
         test(input: URLPatternInit | string): boolean;
         exec(input: URLPatternInit | string): URLPatternResult | null;
     }

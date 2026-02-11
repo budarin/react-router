@@ -131,6 +131,7 @@ function App() {
 - **`options`** (опционально)
 
     - **`section`**: путь раздела под глобальным base (например `/dashboard`). `navigate(to)` по умолчанию добавляет к путям полный префикс (base + section). Комбинируется с глобальным `base` из `configureRoute`, не заменяет его. В компонентах раздела вызывайте `useRoute({ section: '/dashboard' })` и работайте с путями относительно раздела.
+    - **`patternOptions`**: опциональный объект опций конструктора URLPattern, когда `pattern` — строка. `ignoreCase?: boolean` — при `true` матч pathname без учёта регистра. Не используется, если `pattern` — PathMatcher.
 
 **Возвращает:**
 

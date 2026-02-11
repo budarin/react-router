@@ -5,6 +5,13 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [1.5.0] - 2026-02-11
+
+### Added
+
+- **UseRouteOptions.patternOptions:** optional object passed to the URLPattern constructor when `pattern` is a string. `ignoreCase?: boolean` enables case-insensitive pathname matching. Exported type `PatternOptions`. Not used when `pattern` is a PathMatcher.
+- **README:** documented `patternOptions` and `ignoreCase` in the hook options.
+
 ## [1.4.23] - 2026-02-11
 
 ### Documentation

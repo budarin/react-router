@@ -131,6 +131,7 @@ function App() {
 - **`options`** (optional)
 
   - **`section`**: section path under the global base (e.g. `/dashboard`). `navigate(to)` will prepend the full prefix (base + section) to relative paths by default. It combines with global `base` from `configureRoute`, it does not replace it. In section components, call `useRoute({ section: '/dashboard' })` and work with paths relative to the section.
+  - **`patternOptions`**: optional object for URLPattern constructor options when `pattern` is a string. `ignoreCase?: boolean` — when `true`, pathname matching is case-insensitive. Not used when `pattern` is a PathMatcher.
 
 **Returns:**
 

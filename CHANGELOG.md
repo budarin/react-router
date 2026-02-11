@@ -1,155 +1,167 @@
-# История изменений
+# Changelog
 
-Все значимые изменения в проекте описываются в этом файле.
+All notable changes to this project are documented in this file.
 
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
-версионирование — [Semantic Versioning](https://semver.org/lang/ru/).
+The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
+and this project adheres to [Semantic Versioning](https://semver.org/).
+
+## [1.4.19] - 2026-02-11
+
+### Documentation
+
+- **README:** added an English version and a link to the Russian README on GitHub.
 
 ## [1.4.18] - 2026-02-03
 
-### Изменено
+### Changed
 
-- **NavigateOptions:** для сброса base или section в одном вызове `navigate`/`replace` можно передать любое falsy-значение: `''`, `null`, `false` или `undefined` (при наличии ключа). Типы `base` и `section` расширены до `string | null | false`. Логика различает «ключ не передан» (используется effectiveBase) и «ключ передан с пустым значением» (сброс для этого вызова).
-- **README, JSDoc:** обновлено описание опций `base` и `section` в NavigateOptions.
+- **NavigateOptions:** to clear `base` or `section` in a single `navigate` / `replace` call you can now pass any falsy value: `''`, `null`, `false` or `undefined` (when the key is present). The types of `base` and `section` were extended to `string | null | false`. The logic now distinguishes between “key is not provided” (current `effectiveBase` is used) and “key is provided with a falsy value” (prefix is cleared for this call).
+- **README, JSDoc:** updated description of `base` and `section` options in `NavigateOptions`.
 
-### Добавлено
+### Added
 
-- **Тесты:** проверка сброса префикса через `base: null`, `base: false` и через `section: null`, `section: false`, `section: undefined`.
+- **Tests:** coverage for clearing prefix via `base: null`, `base: false` and via `section: null`, `section: false`, `section: undefined`.
 
 ## [1.4.17] - 2026-02-03
 
-- **README:** правки текста.
+### Documentation
+
+- **README:** text tweaks.
 
 ## [1.4.10] - 2026-02-03
 
-- **README:** подчеркнута важная особенно данного хука - корректная работа в конкурентном рендеринге React 18+. Не многие популярные роутеры и хуки могут это.
+### Documentation
+
+- **README:** highlighted an important property of this hook — correct behavior with concurrent rendering in React 18+. Not many popular routers and hooks guarantee this.
 
 ## [1.4.10] - 2026-02-02
 
-### Изменено
+### Changed
 
-**types** - переопределен тип `Logger` - исключен метод `trace`
-
-- **README:** зафиксированы изменения для logger.
+- **types:** redefined `Logger` type – removed the `trace` method.
+- **README:** documented the logger changes.
 
 ## [1.4.9] - 2026-02-02
 
-### Добавлено
+### Added
 
-**Папка demo** исключена из дистрибутива пакета
+- **demo folder:** `demo` directory is now excluded from the published package.
 
 ## [1.4.8] - 2026-02-02
 
-- **README:** уточнена минимальная версия React.
+### Documentation
+
+- **README:** clarified the minimal supported React version.
 
 ## [1.4.6] - 2026-02-02
 
-### Добавлено
+### Added
 
-- **testing-утилита:** `@budarin/use-route/testing` с функцией `setupTestNavigation({ initialUrl })` для простой настройки jsdom‑окружения в тестах (имитация Navigation API и URL для `useRoute`). Часть внутренних тестов переведена на использование этой утилиты.
+- **Testing utility:** `@budarin/use-route/testing` with `setupTestNavigation({ initialUrl })` for easy jsdom setup in tests (Navigation API + URL emulation for `useRoute`). Some internal tests were migrated to use this helper.
 
 ## [1.4.5] - 2026-02-02
 
-### Документация
+### Documentation
 
-- **README:** уточнено позиционирование хука, его назначение и отличие от полноценных роутеров; добавлено описание сценариев использования как headless‑слоя навигации.
+- **README:** clarified the positioning of the hook, its purpose and how it differs from full‑featured routers; added usage scenarios when `useRoute` is used as a headless navigation layer.
 
 ## [1.4.1] - 2025-02-01
 
-### Добавлено
+### Added
 
-- **ESLint** (flat config) в проекте: `eslint`, `@eslint/js`, `typescript-eslint`, `globals`. Скрипт `lint` запускает `eslint .` и `prettier --check .`.
+- **ESLint** (flat config) in the project: `eslint`, `@eslint/js`, `typescript-eslint`, `globals`. The `lint` script runs `eslint .` and `prettier --check .`.
 
-### Документация
+### Documentation
 
-- **README:** явно указано, что `configureRoute` предназначен для однократного вызова при старте приложения; повторная смена конфига в рантайме не поддерживается (внутренние кэши и состояние не сбрасываются).
+- **README:** explicitly states that `configureRoute` is intended to be called once at application startup; changing the config at runtime is not supported (internal caches and state are not reset).
 
-### Изменено
+### Changed
 
-- **package.json:** заполнен `description` для npm.
-- **tsconfig.json:** в `include` оставлен только `src` (убран несуществующий `samples`).
-- **Тесты:** уточнён тест initialLocation (SSR) — в jsdom есть `window`, поэтому `initialLocation` не применяется; проверяется приём конфига и дефолтный снимок.
+- **package.json:** filled the `description` field for npm.
+- **tsconfig.json:** `include` now contains only `src` (removed non‑existent `samples`).
+- **Tests:** refined the `initialLocation` (SSR) test — in jsdom `window` exists, so `initialLocation` is not applied; the test checks config acceptance and the default snapshot.
 
 ## [1.4.0] - 2025-02-01
 
-### Изменено (Breaking)
+### Changed (Breaking)
 
-- **Переименование API:** все сущности с именем «Router» заменены на «Route» (приведение к названию пакета use-route).
+- **API renaming:** all entities named “Router” were renamed to “Route” (aligned with the package name `use-route`):
     - `configureRouter` → **`configureRoute`**
-    - `getRouterConfig` → **`getRouteConfig`** (внутренний)
+    - `getRouterConfig` → **`getRouteConfig`** (internal)
     - `clearRouterCaches` → **`clearRouteCaches`**
-    - тип `RouterState` → **`RouteState`**
-    - тип `RouterConfig` → **`RouteConfig`**
-- В демо компонент `Router` переименован в **`RouteView`**.
+    - type `RouterState` → **`RouteState`**
+    - type `RouterConfig` → **`RouteConfig`**
+- In the demo, the `Router` component was renamed to **`RouteView`**.
 
-### Миграция
+### Migration
 
-Замените в коде вызовы и импорты:
+Replace the following calls and imports in your code:
 
 - `configureRouter({ ... })` → `configureRoute({ ... })`
 - `clearRouterCaches()` → `clearRouteCaches()`
-- при использовании типов: `RouterState` → `RouteState`, `RouterConfig` → `RouteConfig`
+- For types: `RouterState` → `RouteState`, `RouterConfig` → `RouteConfig`
 
 ## [1.3.4] - 2025-02-01
 
-### Изменено
+### Changed
 
-- **Оптимизация производительности:** все методы навигации (`navigate`, `back`, `forward`, `go`, `replace`, `updateState`, `canGoBack`, `canGoForward`) теперь создаются **один раз глобально** вместо создания в каждом компоненте. При 50 компонентах с `useRoute()` экономия ~400 `useCallback` вызовов. Методы кэшируются по `effectiveBase` и переиспользуются между компонентами.
-- **Глобальное хранилище состояния:** `sharedSnapshot` теперь всегда валиден и не очищается при отписке последнего подписчика. Методы читают актуальный snapshot без дополнительных вычислений (O(1)).
-- **Упрощение кода:** удалён fallback на старое API (`window.location`, `window.history.pushState/replaceState`) для браузеров без Navigation API. Хук строго требует Navigation API в браузере; без него возвращает дефолтное состояние и методы работают в режиме no-op. SSR поддержка через `initialLocation` сохранена.
+- **Performance optimizations:** all navigation methods (`navigate`, `back`, `forward`, `go`, `replace`, `updateState`, `canGoBack`, `canGoForward`) are now created **once globally** instead of per component. With 50 components using `useRoute()` this saves roughly 400 `useCallback` calls. Methods are cached by `effectiveBase` and reused across components.
+- **Global state store:** `sharedSnapshot` is now always valid and is not cleared when the last subscriber unsubscribes. Methods read the current snapshot without extra computation (O(1)).
+- **Code simplification:** removed the fallback to the legacy API (`window.location`, `window.history.pushState/replaceState`) for browsers without Navigation API. The hook now strictly requires the Navigation API; otherwise it returns a default snapshot and navigation methods become no‑ops. SSR support via `initialLocation` is preserved.
 
-### Удалено
+### Removed
 
-- **Fallback на window.location/history:** в браузере без Navigation API хук больше не использует `window.location.href` для получения pathname и `window.history` для навигации. Вместо этого возвращается `DEFAULT_SNAPSHOT` (pathname: '/', searchParams: empty), методы навигации — no-op.
+- **Fallback to `window.location` / `history`:** in browsers without Navigation API the hook no longer uses `window.location.href` or `window.history` for navigation. Instead it returns `DEFAULT_SNAPSHOT` (pathname `'/'`, empty `searchParams`) and no‑op navigation methods.
 
 ## [1.3.3] - 2025-02-01
 
-### Изменено
+### Changed
 
-- **useRoute:** в зависимостях финального `useMemo` вместо перечисления полей `routeState` (location, pathname, searchParams, params, historyIndex, state, matched) используется один объект `routeState`. Поведение не меняется: ссылка на `routeState` обновляется только при изменении этих данных.
+- **useRoute:** the final `useMemo` now depends on the single `routeState` object instead of listing individual fields (location, pathname, searchParams, params, historyIndex, state, matched). Behavior is unchanged: the `routeState` reference updates only when these data change.
 
 ## [1.3.2] - 2025-01-31
 
-### Добавлено
+### Added
 
-- **state в возвращаемом объекте хука:** хук возвращает поле **`state`** — state текущей записи истории (из `navigation.currentEntry.getState()` при наличии Navigation API, иначе `history.state`). Установка state при навигации — через `navigate(to, { state })` и `replace(to, { state })`.
-- **`updateState(state)`:** обновление state текущей записи истории без навигации (Navigation API `updateCurrentEntry` / fallback `history.replaceState`). Подписчики получают новый state.
+- **`state` in the hook result:** the hook now returns a `state` field – the state of the current history entry (`navigation.currentEntry.getState()` with the Navigation API, otherwise `history.state`). State can be set via `navigate(to, { state })` and `replace(to, { state })`.
+- **`updateState(state)`:** updates the state of the current history entry without navigation (Navigation API `updateCurrentEntry` / fallback `history.replaceState`). Subscribers receive the updated state.
 
 ## [1.3.1] - 2025-01-30
 
-### Документация
+### Documentation
 
-Внесены не значимые правки в документацию.
+- Minor documentation updates.
 
 ## [1.3.0] - 2025-01-30
 
-### Изменено
+### Changed
 
-- **Same-document навигация:** при вызове `navigation.navigate()` для same-origin переходы больше не вызывают полную перезагрузку страницы. Добавлен перехват события `navigate` и вызов `event.intercept()` для same-origin — по спецификации Navigation API для SPA.
+- **Same‑document navigation:** calling `navigation.navigate()` for same‑origin transitions no longer triggers a full page reload. Added `navigate` event interception and `event.intercept()` for same‑origin navigations, following the Navigation API spec for SPAs.
 
-### Документация
+### Documentation
 
-- README обновлён: описание через Navigation API и `intercept()`, требование **Navigation API и URLPattern**, раздел «Под капотом», state через `currentEntry.getState()`.
+- **README:** updated to describe Navigation API and `intercept()`, the requirement for **Navigation API and URLPattern**, an “Under the hood” section, and `state` access via `currentEntry.getState()`.
 
 ## [1.1.1] - 2025-01-30
 
-### Добавлено
+### Added
 
-- **section** в `UseRouteOptions`: путь подраздела под глобальным base (например `/dashboard`). `pathname` возвращается без этого префикса; `navigate(to)` добавляет глобальный base + section. Комбинируется с `configureRoute.base`, не заменяет его.
-- **section** и **base** в `NavigateOptions`: переопределение section или полного base для одного перехода (например `navigate('/', { section: '' })` — в корень приложения, `navigate('/login', { base: '' })` — путь вне приложения).
-- Демо-приложение в `demo/` (Vite + React): примеры section, base, push/replace, свой matcher.
-- CI (GitHub Actions): проверка форматирования, типов, тесты и сборка при push в `master`.
+- **`section` in `UseRouteOptions`:** sub‑path under the global base (e.g. `/dashboard`). The returned `pathname` is without this prefix; `navigate(to)` adds global base + section. Combines with `configureRoute.base` instead of replacing it.
+- **`section` and `base` in `NavigateOptions`:** override the section or full base for a single navigation (e.g. `navigate('/', { section: '' })` – to the app root, `navigate('/login', { base: '' })` – outside the app).
+- **Demo app** in `demo/` (Vite + React): examples of `section`, `base`, push/replace, custom matcher.
+- **CI (GitHub Actions):** formatting, type‑checking, tests and build on push to `master`.
 
-### Изменено
+### Changed
 
-- Эффективный base для маршрута при `useRoute({ section })` теперь `combineBases(globalBase, section)`; глобальный base больше не отбрасывается при заданном section.
-- Формулировки в README и демо: единый термин **section** (убраны «префикс» и «локальный base» в тексте для пользователя).
+- Effective base for routes created via `useRoute({ section })` now uses `combineBases(globalBase, section)`; the global base is no longer discarded when a section is provided.
+- Wording in README and demo unified around the term **section** (removed “prefix” and “local base” from user‑facing text).
 
 ## [1.0.0] - 2024-12-01
 
-### Добавлено
+### Added
 
-- Первый релиз.
-- Хук `useRoute(options?)`: `pathname`, `searchParams`, `navigate`, `replace`, `back`, `forward`, `canGoBack`, `canGoForward`, `state`, опционально `pattern` и параметры URL.
-- `configureRoute(options)`: глобальные `base`, `logger`, `initialLocation` (SSR).
-- Интеграция с Navigation API; запасной вариант для старых окружений.
+- Initial release.
+- Hook `useRoute(options?)`: `pathname`, `searchParams`, `navigate`, `replace`, `back`, `forward`, `canGoBack`, `canGoForward`, `state`, and optional `pattern` with route params.
+- `configureRoute(options)`: global `base`, `logger`, `initialLocation` (SSR).
+- Integration with the Navigation API; legacy fallback for older environments.
+

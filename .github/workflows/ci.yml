@@ -5,6 +5,7 @@ on:
         branches: [master]
         paths:
             - 'src/**'
+            - 'demo/**'
             - 'tests/**'
             - 'package.json'
             - 'pnpm-lock.yaml'

@@ -17,10 +17,10 @@ export function IgnoreCase({ section = '' }: IgnoreCaseProps) {
             <h1>Матч без учёта регистра (ignoreCase)</h1>
             <p className="demo-lead">
                 Использование флага: передаём <code>ignoreCase: true</code> во второй аргумент хука.
-                Совпадение по регистру: при любом написании сегмента (
-                <code>/docs/Intro</code>, <code>/docs/intro</code>, <code>/docs/INTRO</code>) шаблон
-                совпадает — это и показывают ссылки ниже. В <code>params.slug</code> попадает значение
-                из URL «как есть».
+                Совпадение по регистру: при любом написании сегмента (<code>/docs/Intro</code>,{' '}
+                <code>/docs/intro</code>, <code>/docs/INTRO</code>) шаблон совпадает — это и
+                показывают ссылки ниже. В <code>params.slug</code> попадает значение из URL «как
+                есть».
             </p>
             <pre>{`useRoute('/docs/:slug', { ignoreCase: true })`}</pre>
             <p>
